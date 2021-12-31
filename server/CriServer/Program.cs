@@ -1,9 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 
-namespace cri_server
+namespace CriServer
 {
     class Program
     {
@@ -13,6 +14,12 @@ namespace cri_server
             IConfiguration configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
+            IHost host = Host.CreateDefaultBuilder(args)
+                .ConfigureServices((_, services) =>
+                services
+                    .AddDbContext<CriContext>(options =>
+                        options.UseNpgsql(configuration.GetConnectionString("PostgresDefault")))
+                ).Build();
         }
     }
 }

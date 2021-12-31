@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32002.261
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cri-server", "cri-server.csproj", "{0A76D2C0-C3F7-4703-A169-1FC0CF9D596D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CriServer", "CriServer.csproj", "{0A76D2C0-C3F7-4703-A169-1FC0CF9D596D}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{0EF97130-49FC-4AEF-B2BC-3D8ABC92EB41}"
 EndProject
