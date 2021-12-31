@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "cri-server": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

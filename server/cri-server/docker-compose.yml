@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+  cri-server:
+    image: ${DOCKER_REGISTRY-}criserver
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+  cri-postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: criserver
+      POSTGRES_PASSWORD: ^Dau^48w%MzRxtoR6H^2H@3r9mEZ%&*
+    volumes:
+      - postgresvolume:/var/lib/postgresql
