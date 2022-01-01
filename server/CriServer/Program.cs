@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog;
 using System;
 
 namespace CriServer
@@ -10,7 +11,6 @@ namespace CriServer
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
             IConfiguration configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
@@ -20,6 +20,12 @@ namespace CriServer
                     .AddDbContext<CriContext>(options =>
                         options.UseNpgsql(configuration.GetConnectionString("PostgresDefault")))
                 ).Build();
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .WriteTo.File("/var/log/criserver/criserver.log", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+            Log.Fatal("Hello world!");
+            Log.CloseAndFlush();
         }
     }
 }
