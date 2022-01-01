@@ -1,9 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CriServer;
+using CriServer.IServices;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
+using System.Net.Sockets;
+using System.Text;
 
 namespace CriServer
 {
@@ -19,12 +23,15 @@ namespace CriServer
                 services
                     .AddDbContext<CriContext>(options =>
                         options.UseNpgsql(configuration.GetConnectionString("PostgresDefault")))
+                    .AddScoped<IUserService, UserService>()
                 ).Build();
+            CriContext dbContext = host.Services.GetService<CriContext>();
+            dbContext.Database.EnsureCreated();
+
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
                 .WriteTo.File("/var/log/criserver/criserver.log", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
-            Log.Fatal("Hello world!");
             Log.CloseAndFlush();
         }
     }
