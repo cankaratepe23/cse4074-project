@@ -26,6 +26,10 @@ namespace CriServer
 
     class User
     {
+        public User()
+        {
+            UserId = new Guid();
+        }
         public Guid UserId { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
@@ -35,6 +39,10 @@ namespace CriServer
 
     class Group
     {
+        public Group()
+        {
+            GroupId = new Guid();
+        }
         public Guid GroupId { get; set; }
         public string GroupName { get; set; }
         public ICollection<User> Users { get; set; }
