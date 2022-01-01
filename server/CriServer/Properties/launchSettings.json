@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "cri-server": {
+    "CriServer": {
       "commandName": "Project"
     },
     "Docker": {
