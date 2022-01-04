@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Text;
+using System.IO;
+
 
 namespace cri_client
 {
@@ -10,7 +12,14 @@ namespace cri_client
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            PacketService packetservice = new PacketService();
+            packetservice.Register("sinem", "123");
+
         }
     }
+
+
+
+
+
 }
