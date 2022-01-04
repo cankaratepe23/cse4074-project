@@ -12,17 +12,14 @@ namespace cri_client
     {
         static void Main(string[] args)
         {
-            int port = 5555;
-            string server= "192.168.1.24";
-            TcpClient client = new TcpClient(server, port);
-            Byte[] data = System.Text.Encoding.UTF8.GetBytes("Hello World!");
+            PacketService packetservice = new PacketService();
+            packetservice.Register("sinem", "123");
 
-            NetworkStream stream = client.GetStream();
-            stream.Write(data, 0, data.Length);
-            Console.WriteLine("Sent");
-
-
-            stream.Close();
         }
     }
+
+
+
+
+
 }
