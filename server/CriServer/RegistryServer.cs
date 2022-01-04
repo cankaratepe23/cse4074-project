@@ -45,7 +45,7 @@ namespace CriServer
                     incomingBuffer.Add(currentRead);
                 }
                 string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select( b => (byte) b ).ToArray());
-                Log.Information("Received TCP message:\n{Message}", incomingBuffer);
+                Log.Information("Received TCP message:\n{Message}", messageReceived);
             }
         }
 
