@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Text;
+using System.IO;
+
 
 namespace cri_client
 {
@@ -10,7 +12,17 @@ namespace cri_client
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            int port = 5555;
+            string server= "192.168.1.24";
+            TcpClient client = new TcpClient(server, port);
+            Byte[] data = System.Text.Encoding.UTF8.GetBytes("Hello World!");
+
+            NetworkStream stream = client.GetStream();
+            stream.Write(data, 0, data.Length);
+            Console.WriteLine("Sent");
+
+
+            stream.Close();
         }
     }
 }
