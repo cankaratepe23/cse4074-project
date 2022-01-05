@@ -56,7 +56,7 @@ namespace CriServer
             _criContext.SaveChanges();
         }
 
-        private User GetUserByUsername(string username)
+        public User GetUserByUsername(string username)
         {
             return _criContext.Users.Where(u => u.Username == username).FirstOrDefault();
         }

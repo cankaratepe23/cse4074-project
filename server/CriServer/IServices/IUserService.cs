@@ -7,5 +7,6 @@ namespace CriServer.IServices
         void RegisterUser(User newUser);
         void LoginUser(string username, string password, IPAddress ipAddress);
         void LogoutUser(IPAddress ipAddress);
+        User GetUserByUsername(string username);
     }
 }
