@@ -32,7 +32,7 @@ namespace CriServer
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
-                .WriteTo.File("/var/log/criserver/criserver.log", rollingInterval: RollingInterval.Day)
+                .WriteTo.File("/var/log/criserver/criserver.log", rollingInterval: RollingInterval.Day, flushToDiskInterval: TimeSpan.FromSeconds(1))
                 .CreateLogger();
 
             RegistryServer registryServer = new RegistryServer(host.Services.GetService<IUserService>());
