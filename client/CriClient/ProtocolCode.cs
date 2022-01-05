@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace cri_client
+﻿namespace CriClient
 {
     class ProtocolCode
     {
@@ -14,7 +8,7 @@ namespace cri_client
             Value = value;
         }
 
-        public static ProtocolCode Register { get { return new ProtocolCode("00");  } }
+        public static ProtocolCode Register { get { return new ProtocolCode("00"); } }
         public static ProtocolCode Login { get { return new ProtocolCode("01"); } }
         public static ProtocolCode Logout { get { return new ProtocolCode("02"); } }
         public static ProtocolCode Hello { get { return new ProtocolCode("03"); } }

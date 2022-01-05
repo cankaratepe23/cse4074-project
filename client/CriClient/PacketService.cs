@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace cri_client
+namespace CriClient
 {
     class PacketService
     {
@@ -20,8 +16,7 @@ namespace cri_client
 
         public void SendPacket(bool isUdp, string payload)
         {
-            
-            Byte[] data = System.Text.Encoding.UTF8.GetBytes(payload);
+            byte[] data = System.Text.Encoding.UTF8.GetBytes(payload);
             if (!isUdp)
             {
                 TcpClient client = new TcpClient(SERVER, TCP_PORT);
@@ -58,7 +53,7 @@ namespace cri_client
 
         public void Login(string username, string password)
         {
-            if(username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
+            if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Login + "\n" + username + "\n" + password;
                 SendPacket(false, packet);
@@ -77,7 +72,7 @@ namespace cri_client
 
         public void Hello(string username)
         {
-            if(username.Length <= USERNAME_MAX_LENGTH)
+            if (username.Length <= USERNAME_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Hello + "\n" + username;
                 SendPacket(true, packet);
@@ -90,7 +85,7 @@ namespace cri_client
 
         public void Search(string username)
         {
-            if(username.Length <= USERNAME_MAX_LENGTH)
+            if (username.Length <= USERNAME_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Search + "\n" + username;
                 SendPacket(false, packet);
@@ -109,7 +104,7 @@ namespace cri_client
 
         public void Text(string username, string message)
         {
-            if(username.Length <= USERNAME_MAX_LENGTH && message.Length <= MESSAGE_MAX_LENGTH)
+            if (username.Length <= USERNAME_MAX_LENGTH && message.Length <= MESSAGE_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Text + "\n" + username + "\n" + message;
                 SendPacket(false, packet);
@@ -122,9 +117,9 @@ namespace cri_client
 
         public void GroupCreate(List<string> usernames)
         {
-            if(usernames.Count <= MAX_USER_COUNT)
+            if (usernames.Count <= MAX_USER_COUNT)
             {
-                string packet = ProtocolCode.GroupCreate + "\n" + String.Join("\n", usernames);
+                string packet = ProtocolCode.GroupCreate + "\n" + string.Join("\n", usernames);
                 SendPacket(false, packet);
             }
             else

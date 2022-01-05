@@ -1,12 +1,4 @@
-﻿using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
-using System.Text;
-using System.IO;
-
-
-namespace cri_client
+﻿namespace CriClient
 {
     class Program
     {
@@ -17,9 +9,4 @@ namespace cri_client
 
         }
     }
-
-
-
-
-
 }
