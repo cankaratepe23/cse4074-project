@@ -14,7 +14,7 @@ namespace cri_client
         const int PASSWORD_MAX_LENGTH = 16;
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
-        const string SERVER = "192.168.1.24";
+        const string SERVER = "127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
 
