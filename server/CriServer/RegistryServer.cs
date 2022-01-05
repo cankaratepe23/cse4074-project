@@ -34,18 +34,24 @@ namespace CriServer
                 if (!tcpListener.Pending())
                 {
                     Thread.Sleep(20);
-                    continue;
                 }
-                TcpClient client = tcpListener.AcceptTcpClient();
-                NetworkStream incomingStream = client.GetStream();
-                List<int> incomingBuffer = new();
-                int currentRead;
-                while ((currentRead = incomingStream.ReadByte()) != -1)
+                else
                 {
-                    incomingBuffer.Add(currentRead);
+                    new Thread(() =>
+                    {
+                        // Thread.CurrentThread.IsBackground = false;
+                        TcpClient client = tcpListener.AcceptTcpClient();
+                        NetworkStream incomingStream = client.GetStream();
+                        List<int> incomingBuffer = new();
+                        int currentRead;
+                        while ((currentRead = incomingStream.ReadByte()) != -1)
+                        {
+                            incomingBuffer.Add(currentRead);
+                        }
+                        string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte)b).ToArray());
+                        Log.Information("Received TCP message:\n{Message}", messageReceived);
+                    }).Start();
                 }
-                string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select( b => (byte) b ).ToArray());
-                Log.Information("Received TCP message:\n{Message}", messageReceived);
             }
         }
 
