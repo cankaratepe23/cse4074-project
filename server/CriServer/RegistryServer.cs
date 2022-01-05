@@ -1,4 +1,4 @@
-using CriServer.IServices;
+﻿using CriServer.IServices;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -47,6 +47,9 @@ namespace CriServer
                         {
                             incomingBuffer.Add(currentRead);
                         }
+                        // Simulate long and blocking operation to test multi-threaded functionality
+                        Log.Information("Received TCP connection from {IP} Sleeping...", client.Client.RemoteEndPoint);
+                        Thread.Sleep(5000);
                         string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte)b).ToArray());
                         Log.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint, messageReceived);
                     }).Start();
