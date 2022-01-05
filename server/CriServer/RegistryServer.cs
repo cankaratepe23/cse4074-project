@@ -1,4 +1,4 @@
-﻿using CriServer.IServices;
+using CriServer.IServices;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -39,7 +39,6 @@ namespace CriServer
                 {
                     new Thread(() =>
                     {
-                        // Thread.CurrentThread.IsBackground = false;
                         TcpClient client = tcpListener.AcceptTcpClient();
                         NetworkStream incomingStream = client.GetStream();
                         List<int> incomingBuffer = new();
@@ -49,7 +48,7 @@ namespace CriServer
                             incomingBuffer.Add(currentRead);
                         }
                         string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte)b).ToArray());
-                        Log.Information("Received TCP message:\n{Message}", messageReceived);
+                        Log.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint, messageReceived);
                     }).Start();
                 }
             }
