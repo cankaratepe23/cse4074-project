@@ -19,11 +19,16 @@ namespace CriServer
             IConfiguration configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
+            string connectionStringOption = "PostgresDefault";
+            if (args.Length == 1 && args[0] == "--is-standalone")
+            {
+                connectionStringOption = "PostgresStandalone";
+            }
             IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((_, services) =>
                 services
                     .AddDbContext<CriContext>(options =>
-                        options.UseNpgsql(configuration.GetConnectionString("PostgresDefault")))
+                        options.UseNpgsql(configuration.GetConnectionString(connectionStringOption)))
                     .AddScoped<IUserService, UserService>()
                     .AddScoped<IGroupService, GroupService>()
                 ).Build();
