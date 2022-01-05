@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Sockets;
 
 namespace CriClient
@@ -10,7 +11,8 @@ namespace CriClient
         const int PASSWORD_MAX_LENGTH = 16;
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
-        const string SERVER = "127.0.0.1";
+        const string SERVER = "192.168.1.21";
+            //"127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
 
@@ -35,6 +37,30 @@ namespace CriClient
             }
 
         }
+
+        public void ReceivePacket()
+        {
+            IPAddress ipad = IPAddress.Parse(SERVER);
+            TcpListener server = new TcpListener(ipad, TCP_PORT);
+            server.Start();
+            List<byte> bytes = new List<byte>();
+            string data = null;
+            TcpClient client = server.AcceptTcpClient();
+            NetworkStream stream = client.GetStream();
+
+            int i;
+            while ((i = stream.ReadByte()) != -1)
+            {
+                bytes.Add((byte)i);
+            }
+            data = System.Text.Encoding.UTF8.GetString(bytes.ToArray());
+            Console.WriteLine("Received: {0}", data);
+            client.Close();
+            server.Stop();
+        }
+
+
+
         public void Register(string username, string password)
         {
             if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
