@@ -1,5 +1,6 @@
 ﻿using CriServer;
 using CriServer.IServices;
+using CriServer.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,7 @@ namespace CriServer
                     .AddDbContext<CriContext>(options =>
                         options.UseNpgsql(configuration.GetConnectionString("PostgresDefault")))
                     .AddScoped<IUserService, UserService>()
+                    .AddScoped<IGroupService, GroupService>()
                 ).Build();
             CriContext dbContext = host.Services.GetService<CriContext>();
             dbContext.Database.EnsureCreated();
