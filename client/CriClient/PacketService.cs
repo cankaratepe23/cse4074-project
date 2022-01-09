@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Timers;
 
 namespace CriClient
 {
@@ -11,7 +12,7 @@ namespace CriClient
         const int PASSWORD_MAX_LENGTH = 16;
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
-        const string SERVER = "192.168.1.21";
+        const string SERVER = "192.168.1.24";
             //"127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
@@ -37,7 +38,20 @@ namespace CriClient
             }
 
         }
+        public void SendHeartbeat(string username)
+        {
+            Timer HbTimer = new System.Timers.Timer();
+            HbTimer.Interval = 6000;
+            HbTimer.Elapsed += (sender, e) => HeartBeat(sender, e, username);
+            HbTimer.AutoReset = true;
+            HbTimer.Enabled = true;
 
+        }
+        private void HeartBeat(object sender, ElapsedEventArgs e, string username)
+        {
+            //SendPacket(true, ProtocolCode.Hello + "\n" + username);
+            Console.WriteLine("Heartbeat sent");
+        }
         public void ReceivePacket()
         {
             IPAddress ipad = IPAddress.Parse(SERVER);
