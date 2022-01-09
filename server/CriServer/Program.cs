@@ -33,7 +33,7 @@ namespace CriServer
                     .AddScoped<IGroupService, GroupService>()
                 ).Build();
             CriContext dbContext = host.Services.GetService<CriContext>();
-            dbContext.Database.EnsureCreated();
+            dbContext?.Database.EnsureCreated();
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
