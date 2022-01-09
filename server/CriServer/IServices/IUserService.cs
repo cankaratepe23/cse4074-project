@@ -4,9 +4,9 @@ namespace CriServer.IServices
 {
     interface IUserService
     {
-        void RegisterUser(User newUser);
-        void LoginUser(string username, string password, IPAddress ipAddress);
+        RegistryResponse RegisterUser(string username, string password);
+        RegistryResponse LoginUser(string username, string password, IPAddress ipAddress);
         void LogoutUser(IPAddress ipAddress);
-        User GetUserByUsername(string username);
+        RegistryResponse Search(string username);
     }
 }

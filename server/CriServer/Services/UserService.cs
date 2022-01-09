@@ -1,11 +1,11 @@
-﻿using CriServer.IServices;
-using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using CriServer.IServices;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace CriServer
+namespace CriServer.Services
 {
     class UserService : IUserService
     {
@@ -20,29 +20,38 @@ namespace CriServer
             _criContext = services.GetService<CriContext>();
         }
 
-        public void RegisterUser(User newUser)
+        public RegistryResponse RegisterUser(string username, string password)
         {
-            if (!IsUserValid(newUser))
-                throw new ArgumentException("Username and password should be less than 16 characters!");
+            if (!IsUserValid(username, password))
+                return RegistryResponse.REGISTER_INVALID_USERNAME_OR_PASSWORD;
 
-            if (GetUserByUsername(newUser.Username) != null)
-                throw new ArgumentException("This username has already been registered!");
+            if (GetUserByUsername(username) != null)
+                return RegistryResponse.REGISTER_USERNAME_ALREADY_REGISTERED;
 
-            _criContext.Add(newUser);
+            _criContext.Add(new User()
+            {
+                Username = username,
+                Password = password
+            });
             _criContext.SaveChanges();
+
+            return RegistryResponse.REGISTER_SUCCESSFUL;
         }
 
-        public void LoginUser(string username, string password, IPAddress ipAddress)
+        public RegistryResponse LoginUser(string username, string password, IPAddress ipAddress)
         {
             var user = GetUserByUsername(username);
 
             if (user == null)
-                throw new ArgumentException("User is not found!");
-            else if (password != user.Password)
-                throw new ArgumentException("Password is incorrect!");
+                return RegistryResponse.LOGIN_FAIL;
+            
+            if (password != user.Password)
+                return RegistryResponse.LOGIN_FAIL;
 
             user.IpAddress = ipAddress;
             _criContext.SaveChanges();
+
+            return RegistryResponse.LOGIN_SUCCESSFUL;
         }
 
         public void LogoutUser(IPAddress ipAddress)
@@ -56,14 +65,27 @@ namespace CriServer
             _criContext.SaveChanges();
         }
 
-        public User GetUserByUsername(string username)
+        public RegistryResponse Search(string username)
         {
-            return _criContext.Users.Where(u => u.Username == username).FirstOrDefault();
+            User user = GetUserByUsername(username);
+
+            if (user == null)
+                return RegistryResponse.SEARCH_USER_NOT_FOUND;
+            
+            if (user.IpAddress.Equals(IPAddress.None))
+                return RegistryResponse.SEARCH_USER_OFFLINE;
+            
+            return RegistryResponse.SEARCH_USER_ONLINE(user.IpAddress);
+        }
+
+        private User GetUserByUsername(string username)
+        {
+            return _criContext.Users.FirstOrDefault(u => u.Username == username);
         }
 
         private User GetUserByIPAddress(IPAddress ipAddress)
         {
-            return _criContext.Users.Where(u => u.IpAddress == ipAddress).FirstOrDefault();
+            return _criContext.Users.FirstOrDefault(u => u.IpAddress.Equals(ipAddress));
         }
 
         private List<User> GetUsersByUsernames(List<string> usernames)
@@ -71,9 +93,10 @@ namespace CriServer
             return _criContext.Users.Where(u => usernames.Contains(u.Username)).ToList();
         }
 
-        private bool IsUserValid(User user)
+        private bool IsUserValid(string username, string password)
         {
-            return user.Username.Length <= USERNAME_MAX_CHARACTER_LIMIT && user.Password.Length <= PASSWORD_MAX_CHARACTER_LIMIT;
+            return username.Length <= USERNAME_MAX_CHARACTER_LIMIT &&
+                   password.Length <= PASSWORD_MAX_CHARACTER_LIMIT;
         }
     }
 }
