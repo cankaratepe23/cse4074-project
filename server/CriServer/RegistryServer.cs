@@ -27,8 +27,15 @@ namespace CriServer
 
         public void Start()
         {
-            tcpListener = new TcpListener(System.Net.IPAddress.Any, TCP_PORT);
-            udpListener = new UdpClient(UDP_PORT);
+            Thread tcpThread = new Thread(TcpListen);
+            Thread udpThread = new Thread(UdpListen);
+            tcpThread.Start();
+            udpThread.Start();
+        }
+
+        private void TcpListen()
+        {
+            tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
             tcpListener.Start();
             while (true)
             {
@@ -51,19 +58,20 @@ namespace CriServer
 
                         // Simulate long and blocking operation to test multi-threaded functionality
                         Log.Information("Received TCP connection from {IP} Sleeping...", client.Client.RemoteEndPoint);
-                        Thread.Sleep(5000);
+                        //Thread.Sleep(2000);
                         string messageReceived =
-                            Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte) b).ToArray());
+                            Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte)b).ToArray());
                         Log.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint,
                             messageReceived);
+                        Console.WriteLine("Received TCP message from {0}:\n{1}", client.Client.RemoteEndPoint, messageReceived);
 
                         string[] parsedMessage = messageReceived.Split("\n");
                         ProtocolCode method = new ProtocolCode(parsedMessage[0]);
                         string[] payload = parsedMessage.Skip(1).ToArray();
-                        IPAddress ipAddress = ((IPEndPoint) client.Client.RemoteEndPoint)?.Address;
+                        IPAddress ipAddress = ((IPEndPoint)client.Client.RemoteEndPoint)?.Address;
 
                         RegistryResponse registryResponse = RegistryResponse.LOGIN_SUCCESSFUL;  // to be changed, handle logout
-                        if (method.Equals(ProtocolCode.Register))
+                        if (method.Equals(ProtocolCode.Register)) // FIXME: Reverse these
                             registryResponse = Register(payload);
                         else if (method.Equals(ProtocolCode.Login))
                             registryResponse = Login(payload, ipAddress);
@@ -77,6 +85,22 @@ namespace CriServer
                         client.GetStream().Close();
                     }).Start();
                 }
+            }
+        }
+
+        private void UdpListen()
+        {
+            udpListener = new UdpClient(UDP_PORT);
+            while (true)
+            {
+                IPEndPoint remoteEndPoint = null;
+                byte[] incomingData = udpListener.Receive(ref remoteEndPoint);
+                string payload = Encoding.UTF8.GetString(incomingData);
+                List<string> tokenizedPayload = payload.Split('\n').ToList();
+                if (!ProtocolCode.Hello.Equals(tokenizedPayload[0]))
+                    break;
+                Log.Information("Received TCP message from {IP}:\n{Message}", remoteEndPoint, tokenizedPayload);
+                Console.WriteLine("Received UDP message from {0}:\n{1}", remoteEndPoint, tokenizedPayload);
             }
         }
 
