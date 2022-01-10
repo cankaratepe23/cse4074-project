@@ -27,6 +27,8 @@ namespace CriServer
 
         public override bool Equals(Object obj)
         {
+            if (obj is string)
+                return Value == obj.ToString();
             if (obj is not ProtocolCode protocolCode)
                 return false;
 

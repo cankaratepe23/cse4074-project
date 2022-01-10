@@ -22,7 +22,7 @@ namespace CriServer
         public static RegistryResponse LOGIN_FAIL => new(ProtocolCode.Login + "\nFAIL");
 
         public static RegistryResponse SEARCH_USER_ONLINE(IPAddress ipAddress) =>
-            new(ProtocolCode.Search + "\n" + ipAddress);
+            new(ProtocolCode.Search + "\nOK\n" + ipAddress);
 
         public static RegistryResponse SEARCH_USER_OFFLINE => new(ProtocolCode.Search + "\nOFFLINE");
 

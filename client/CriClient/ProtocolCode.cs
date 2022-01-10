@@ -26,6 +26,10 @@
 
         public override bool Equals(object obj)
         {
+            if (obj is string)
+            {
+                return Value == obj.ToString();
+            }
             if (obj is not ProtocolCode protocolCode)
             {
                 return false;
