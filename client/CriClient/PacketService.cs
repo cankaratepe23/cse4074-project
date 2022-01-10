@@ -1,23 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Timers;
 
 namespace CriClient
 {
-    class PacketService
+    static class PacketService
     {
+        static Timer HbTimer = new Timer();
         const int USERNAME_MAX_LENGTH = 16;
         const int PASSWORD_MAX_LENGTH = 16;
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
         const string SERVER = "192.168.1.24";
+            //"numellus.tk";
+            //"192.168.1.24";
             //"127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
 
-        public void SendPacket(bool isUdp, string payload)
+        public static void SendPacket(bool isUdp, string payload)
         {
             byte[] data = System.Text.Encoding.UTF8.GetBytes(payload);
             if (!isUdp)
@@ -26,7 +30,6 @@ namespace CriClient
                 NetworkStream stream = client.GetStream();
                 stream.Write(data, 0, data.Length);
                 Console.WriteLine("Sent");
-
                 stream.Close();
             }
 
@@ -38,23 +41,26 @@ namespace CriClient
             }
 
         }
-        public void SendHeartbeat(string username)
+        public static void SendHeartbeat(string username)
         {
-            Timer HbTimer = new Timer();
             HbTimer.Interval = 6000;
             HbTimer.Elapsed += (sender, e) => HeartBeat(sender, e, username);
             HbTimer.AutoReset = true;
             HbTimer.Enabled = true;
-
         }
-        private void HeartBeat(object sender, ElapsedEventArgs e, string username)
+
+        public static void KillHeartbeat()
         {
-            //SendPacket(true, ProtocolCode.Hello + "\n" + username);
+            HbTimer.Enabled = false;
+        }
+        private static void HeartBeat(object sender, ElapsedEventArgs e, string username)
+        {
+            SendPacket(true, ProtocolCode.Hello + "\n" + username);
             Console.WriteLine("Heartbeat sent");
         }
-        public string ReceivePacket()
+        public static string ReceivePacket()
         {
-            IPAddress ipad = IPAddress.Parse(SERVER);
+            //IPAddress ipad = IPAddress.Parse(SERVER);
             TcpListener server = new TcpListener(IPAddress.Any, TCP_PORT);
             server.Start();
             List<byte> bytes = new List<byte>();
@@ -76,7 +82,7 @@ namespace CriClient
 
 
 
-        public Response Register(string username, string password)
+        public static Response Register(string username, string password)
         {
             if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
             {
@@ -110,7 +116,7 @@ namespace CriClient
 
         }
 
-        public Response Login(string username, string password)
+        public static Response Login(string username, string password)
         {
             if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
             {
@@ -126,6 +132,7 @@ namespace CriClient
                 } while (!ProtocolCode.Login.Equals(tokenizedanswer[0]) && counter < 2);
                 if (tokenizedanswer[1] == "OK")
                 {
+                    SendHeartbeat(username);
                     return new Response { IsSuccessful = true, MessageToUser = "Login successful. " };
                 }
                 if (tokenizedanswer[1] == "FAIL")
@@ -140,13 +147,13 @@ namespace CriClient
             }
         }
 
-        public void Logout()
+        public static void Logout()
         {
             string packet = ProtocolCode.Logout.ToString();
             SendPacket(false, packet);
         }
 
-        public void Hello(string username)
+        public static void Hello(string username)
         {
             if (username.Length <= USERNAME_MAX_LENGTH)
             {
@@ -159,7 +166,7 @@ namespace CriClient
             }
         }
 
-        public Response Search(string username)
+        public static Response Search(string username)
         {
             if (username.Length <= USERNAME_MAX_LENGTH)
             {
@@ -181,6 +188,10 @@ namespace CriClient
                 {
                     return new Response { IsSuccessful = false, MessageToUser = "User not found. " };
                 }
+                if(tokenizedanswer[1] == "OK")
+                {
+                    return new Response { IsSuccessful = true, MessageToUser = "User is online. " };
+                }
                 return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
             }
             else
@@ -189,13 +200,13 @@ namespace CriClient
             }
         }
 
-        public void Chat()
+        public static void Chat()
         {
             string packet = ProtocolCode.Chat.ToString();
             SendPacket(false, packet);
         }
 
-        public void Text(string username, string message)
+        public static void Text(string username, string message)
         {
             if (username.Length <= USERNAME_MAX_LENGTH && message.Length <= MESSAGE_MAX_LENGTH)
             {
@@ -208,7 +219,7 @@ namespace CriClient
             }
         }
 
-        public void GroupCreate(List<string> usernames)
+        public static Response GroupCreate(List<string> usernames)
         {
             if (usernames.Count <= MAX_USER_COUNT)
             {
@@ -222,6 +233,16 @@ namespace CriClient
                     tokenizedanswer = answer.Split("\n");
                     counter++;
                 } while (!ProtocolCode.GroupCreate.Equals(tokenizedanswer[0]) && counter < 2);
+                if(tokenizedanswer[1] == "MEMBERS_NOT_FOUND")
+                {
+                    var listAnswer = new List<string>(tokenizedanswer);
+                    return new Response { IsSuccessful = false, MessageToUser = "Following users are not found: " + string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2))};
+                }
+                if(tokenizedanswer[1] == "OK")
+                {
+                    return new Response { IsSuccessful = true, MessageToUser = "Group successfully created. " };
+                }
+                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
             }
             else
             {
@@ -229,7 +250,7 @@ namespace CriClient
             }
         }
 
-        public void GroupSearch(Guid gid)
+        public static Response GroupSearch(Guid gid)
         {
             string packet = ProtocolCode.GroupSearch + "\n" + gid;
             SendPacket(false, packet);
@@ -241,9 +262,18 @@ namespace CriClient
                 tokenizedanswer = answer.Split("\n");
                 counter++;
             } while (!ProtocolCode.GroupSearch.Equals(tokenizedanswer[0]) && counter < 2);
+            if(tokenizedanswer[1] == "NOT_FOUND")
+            {
+                return new Response { IsSuccessful = false, MessageToUser = "Group with the given ID doesn't exist." };
+            }
+            if(tokenizedanswer[1] == "OK")
+            {
+                return new Response { IsSuccessful = true, MessageToUser = string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2)) };
+            }
+            return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
         }
 
-        public void GroupText(Guid gid, string username, string message)
+        public static void GroupText(Guid gid, string username, string message)
         {
             if (username.Length <= USERNAME_MAX_LENGTH && message.Length <= MESSAGE_MAX_LENGTH)
             {
