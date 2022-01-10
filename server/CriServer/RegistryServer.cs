@@ -63,7 +63,6 @@ namespace CriServer
                             Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte)b).ToArray());
                         Log.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint,
                             messageReceived);
-                        Console.WriteLine("Received TCP message from {0}:\n{1}", client.Client.RemoteEndPoint, messageReceived);
 
                         string[] parsedMessage = messageReceived.Split("\n");
                         ProtocolCode method = new ProtocolCode(parsedMessage[0]);
@@ -80,11 +79,28 @@ namespace CriServer
                         else if (method.Equals(ProtocolCode.Search))
                             registryResponse = Search(payload);
 
-                        byte[] data = Encoding.UTF8.GetBytes(registryResponse.ToString());
-                        client.GetStream().Write(data, 0, data.Length);
-                        client.GetStream().Close();
+                        Log.Error("Aaaaa");
+
+                        SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString());
                     }).Start();
                 }
+            }
+        }
+
+        public void SendPacket(bool isUdp, string ip, string payload)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(payload);
+            if (!isUdp)
+            {
+                TcpClient client = new TcpClient(ip, TCP_PORT);
+                NetworkStream stream = client.GetStream();
+                stream.Write(data, 0, data.Length);
+                stream.Close();
+            }
+            else
+            {
+                UdpClient udpClient = new UdpClient();
+                udpClient.Send(data, data.Length, ip, UDP_PORT);
             }
         }
 
@@ -99,8 +115,7 @@ namespace CriServer
                 List<string> tokenizedPayload = payload.Split('\n').ToList();
                 if (!ProtocolCode.Hello.Equals(tokenizedPayload[0]))
                     break;
-                Log.Information("Received TCP message from {IP}:\n{Message}", remoteEndPoint, tokenizedPayload);
-                Console.WriteLine("Received UDP message from {0}:\n{1}", remoteEndPoint, tokenizedPayload);
+                Log.Information("Received UDP message from {IP}:\n{Message}", remoteEndPoint, tokenizedPayload);
             }
         }
 
