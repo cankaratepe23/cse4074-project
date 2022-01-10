@@ -81,9 +81,10 @@ namespace CriServer
 
                         byte[] data = Encoding.UTF8.GetBytes(registryResponse.ToString());
                         incomingStream.Write(data, 0, data.Length);
+                        
+                        logger.Information("Sent TCP respone to {IP}:\n{Message}", client.Client.RemoteEndPoint, registryResponse);
                         incomingStream.Close();
                         //SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString(), tcpPort: ((IPEndPoint)client.Client.RemoteEndPoint).Port);
-                        logger.Information("Sent TCP respone to {IP}:\n{Message}", client.Client.RemoteEndPoint, registryResponse);
                     }).Start();
                 }
             }
