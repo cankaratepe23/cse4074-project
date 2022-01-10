@@ -80,18 +80,18 @@ namespace CriServer
                         else if (ProtocolCode.Search.Equals(method))
                             registryResponse = Search(payload);
 
-                        SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString());
+                        SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString(), tcpPort: ((IPEndPoint)client.Client.RemoteEndPoint).Port);
                     }).Start();
                 }
             }
         }
 
-        public void SendPacket(bool isUdp, string ip, string payload)
+        public void SendPacket(bool isUdp, string ip, string payload, int tcpPort = TCP_PORT, int udpPort = UDP_PORT)
         {
             byte[] data = Encoding.UTF8.GetBytes(payload);
             if (!isUdp)
             {
-                TcpClient client = new TcpClient(ip, TCP_PORT);
+                TcpClient client = new TcpClient(ip, tcpPort);
                 NetworkStream stream = client.GetStream();
                 stream.Write(data, 0, data.Length);
                 stream.Close();
@@ -99,7 +99,7 @@ namespace CriServer
             else
             {
                 UdpClient udpClient = new UdpClient();
-                udpClient.Send(data, data.Length, ip, UDP_PORT);
+                udpClient.Send(data, data.Length, ip, udpPort);
             }
         }
 
