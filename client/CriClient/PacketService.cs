@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace CriClient
 {
@@ -12,32 +17,45 @@ namespace CriClient
         const int PASSWORD_MAX_LENGTH = 16;
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
-        const string SERVER = "192.168.1.24";
-            //"127.0.0.1";
+
+        const string SERVER = "127.0.0.1";
+
+        //"127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
 
-        public void SendPacket(bool isUdp, string payload)
+        public string SendPacket(bool isUdp, string payload)
         {
-            byte[] data = System.Text.Encoding.UTF8.GetBytes(payload);
+            byte[] data = Encoding.UTF8.GetBytes(payload);
+
             if (!isUdp)
             {
                 TcpClient client = new TcpClient(SERVER, TCP_PORT);
                 NetworkStream stream = client.GetStream();
                 stream.Write(data, 0, data.Length);
+
                 Console.WriteLine("Sent");
+                List<byte> bytes = new List<byte>();
+                int i;
+                while ((i = stream.ReadByte()) != -1)
+                {
+                    bytes.Add((byte) i);
+                }
 
+                string dataRead = System.Text.Encoding.UTF8.GetString(bytes.ToArray());
+                Console.WriteLine("Received: {0}", dataRead);
                 stream.Close();
+                return dataRead;
             }
-
             else
             {
                 UdpClient udpClient = new UdpClient();
                 udpClient.Send(data, data.Length, SERVER, UDP_PORT);
-
             }
 
+            return "";
         }
+
         public void SendHeartbeat(string username)
         {
             Timer HbTimer = new Timer();
@@ -45,13 +63,14 @@ namespace CriClient
             HbTimer.Elapsed += (sender, e) => HeartBeat(sender, e, username);
             HbTimer.AutoReset = true;
             HbTimer.Enabled = true;
-
         }
+
         private void HeartBeat(object sender, ElapsedEventArgs e, string username)
         {
             //SendPacket(true, ProtocolCode.Hello + "\n" + username);
             Console.WriteLine("Heartbeat sent");
         }
+
         public string ReceivePacket()
         {
             IPAddress ipad = IPAddress.Parse(SERVER);
@@ -65,15 +84,15 @@ namespace CriClient
             int i;
             while ((i = stream.ReadByte()) != -1)
             {
-                bytes.Add((byte)i);
+                bytes.Add((byte) i);
             }
+
             data = System.Text.Encoding.UTF8.GetString(bytes.ToArray());
-            //Console.WriteLine("Received: {0}", data);
+            Console.WriteLine("Received: {0}", data);
             client.Close();
             server.Stop();
             return data;
         }
-
 
 
         public Response Register(string username, string password)
@@ -82,32 +101,33 @@ namespace CriClient
             {
                 string packet = ProtocolCode.Register + "\n" + username + "\n" + password;
                 //string packet = $"00\n{username}\n{password}";
-                SendPacket(false, packet);
+                string answer = SendPacket(false, packet);
                 string[] tokenizedanswer;
                 int counter = 0;
                 do
                 {
-                    string answer = ReceivePacket();
                     tokenizedanswer = answer.Split("\n");
                     counter++;
                 } while (!ProtocolCode.Register.Equals(tokenizedanswer[0]) && counter < 2);
-                
+
                 if (tokenizedanswer[1] == "ALREADY_EXISTS")
                 {
-                    return new Response() { IsSuccessful = false, MessageToUser = "This user already exists." };
+                    return new Response() {IsSuccessful = false, MessageToUser = "This user already exists."};
                 }
-                if(tokenizedanswer[1] == "OK")
+
+                if (tokenizedanswer[1] == "OK")
                 {
-                    return new Response() { IsSuccessful = true, MessageToUser = "Registered Successfully" };
+                    return new Response() {IsSuccessful = true, MessageToUser = "Registered Successfully"};
                 }
-                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
+
+                return new Response() {IsSuccessful = false, MessageToUser = "Unknown Error"};
             }
             else
             {
                 throw new Exception("username or password char limit exceeded");
             }
 
-
+            return null;
         }
 
         public Response Login(string username, string password)
@@ -115,24 +135,26 @@ namespace CriClient
             if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Login + "\n" + username + "\n" + password;
-                SendPacket(false, packet);
+                string answer = SendPacket(false, packet);
                 string[] tokenizedanswer;
                 int counter = 0;
                 do
                 {
-                    string answer = ReceivePacket();
                     tokenizedanswer = answer.Split("\n");
                     counter++;
                 } while (!ProtocolCode.Login.Equals(tokenizedanswer[0]) && counter < 2);
+
                 if (tokenizedanswer[1] == "OK")
                 {
-                    return new Response { IsSuccessful = true, MessageToUser = "Login successful. " };
+                    return new Response {IsSuccessful = true, MessageToUser = "Login successful. "};
                 }
+
                 if (tokenizedanswer[1] == "FAIL")
                 {
-                    return new Response { IsSuccessful = false, MessageToUser = "Cannot login. " };
+                    return new Response {IsSuccessful = false, MessageToUser = "Cannot login. "};
                 }
-                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
+
+                return new Response() {IsSuccessful = false, MessageToUser = "Unknown Error"};
             }
             else
             {
@@ -164,24 +186,26 @@ namespace CriClient
             if (username.Length <= USERNAME_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Search + "\n" + username;
-                SendPacket(false, packet);
+                string answer = SendPacket(false, packet);
                 string[] tokenizedanswer;
                 int counter = 0;
                 do
                 {
-                    string answer = ReceivePacket();
                     tokenizedanswer = answer.Split("\n");
                     counter++;
                 } while (!ProtocolCode.Search.Equals(tokenizedanswer[0]) && counter < 2);
+
                 if (tokenizedanswer[1] == "OFFLINE")
                 {
-                    return new Response { IsSuccessful = false, MessageToUser = "User is offline. " };
+                    return new Response {IsSuccessful = false, MessageToUser = "User is offline. "};
                 }
+
                 if (tokenizedanswer[1] == "NOT_FOUND")
                 {
-                    return new Response { IsSuccessful = false, MessageToUser = "User not found. " };
+                    return new Response {IsSuccessful = false, MessageToUser = "User not found. "};
                 }
-                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
+
+                return new Response() {IsSuccessful = false, MessageToUser = "Unknown Error"};
             }
             else
             {
@@ -255,6 +279,5 @@ namespace CriClient
                 throw new Exception("username or message char limit exceeded");
             }
         }
-
     }
 }
