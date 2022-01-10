@@ -71,16 +71,14 @@ namespace CriServer
                         IPAddress ipAddress = ((IPEndPoint)client.Client.RemoteEndPoint)?.Address;
 
                         RegistryResponse registryResponse = RegistryResponse.LOGIN_SUCCESSFUL;  // to be changed, handle logout
-                        if (method.Equals(ProtocolCode.Register)) // FIXME: Reverse these
+                        if (ProtocolCode.Register.Equals(method))
                             registryResponse = Register(payload);
-                        else if (method.Equals(ProtocolCode.Login))
+                        else if (ProtocolCode.Login.Equals(method))
                             registryResponse = Login(payload, ipAddress);
-                        else if (method.Equals(ProtocolCode.Logout))
+                        else if (ProtocolCode.Logout.Equals(method))
                             Logout(ipAddress);
-                        else if (method.Equals(ProtocolCode.Search))
+                        else if (ProtocolCode.Search.Equals(method))
                             registryResponse = Search(payload);
-
-                        logger.Error("Aaaaa");
 
                         SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString());
                     }).Start();
