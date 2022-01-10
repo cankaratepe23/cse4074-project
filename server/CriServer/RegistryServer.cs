@@ -27,14 +27,15 @@ namespace CriServer
 
         public void Start()
         {
-            Thread tcpThread = new Thread(TcpListen);
-            Thread udpThread = new Thread(UdpListen);
+            Thread tcpThread = new Thread(() => TcpListen(Log.Logger));
+            Thread udpThread = new Thread(() => UdpListen(Log.Logger));
             tcpThread.Start();
             udpThread.Start();
         }
 
-        private void TcpListen()
+        private void TcpListen(ILogger logger)
         {
+            logger.Information("logger from TcpListen()");
             tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
             tcpListener.Start();
             while (true)
@@ -57,11 +58,11 @@ namespace CriServer
                         }
 
                         // Simulate long and blocking operation to test multi-threaded functionality
-                        Log.Information("Received TCP connection from {IP} Sleeping...", client.Client.RemoteEndPoint);
+                        logger.Information("Received TCP connection from {IP} Sleeping...", client.Client.RemoteEndPoint);
                         //Thread.Sleep(2000);
                         string messageReceived =
                             Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte)b).ToArray());
-                        Log.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint,
+                        logger.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint,
                             messageReceived);
 
                         string[] parsedMessage = messageReceived.Split("\n");
@@ -79,7 +80,7 @@ namespace CriServer
                         else if (method.Equals(ProtocolCode.Search))
                             registryResponse = Search(payload);
 
-                        Log.Error("Aaaaa");
+                        logger.Error("Aaaaa");
 
                         SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString());
                     }).Start();
@@ -104,7 +105,7 @@ namespace CriServer
             }
         }
 
-        private void UdpListen()
+        private void UdpListen(ILogger logger)
         {
             udpListener = new UdpClient(UDP_PORT);
             while (true)
@@ -115,7 +116,7 @@ namespace CriServer
                 List<string> tokenizedPayload = payload.Split('\n').ToList();
                 if (!ProtocolCode.Hello.Equals(tokenizedPayload[0]))
                     break;
-                Log.Information("Received UDP message from {IP}:\n{Message}", remoteEndPoint, tokenizedPayload);
+                logger.Information("Received UDP message from {IP}:\n{Message}", remoteEndPoint, tokenizedPayload);
             }
         }
 

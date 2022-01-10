@@ -39,7 +39,8 @@ namespace CriServer
                 .WriteTo.Console()
                 .WriteTo.File("/var/log/criserver/criserver.log", rollingInterval: RollingInterval.Day, flushToDiskInterval: TimeSpan.FromSeconds(1))
                 .CreateLogger();
-
+            Log.Logger.Information("Starting registry server listeners."); // Do not delete!
+            // This is important for logging to work in background threads. I don't know why but removing the line above breaks logging.
             RegistryServer registryServer = new RegistryServer(host.Services.GetService<IUserService>());
             registryServer.Start();
 
