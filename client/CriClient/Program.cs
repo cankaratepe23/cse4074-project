@@ -108,7 +108,8 @@ namespace CriClient
                 }
                 else if (chooseaction == "6")
                 {
-                    PacketService.KillHeartbeat();
+                    var Response = PacketService.Logout(LoggedinUsername);
+                    Console.WriteLine(Response.MessageToUser);
                     LoggedinUsername = "";
                     return;
                 }
