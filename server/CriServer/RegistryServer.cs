@@ -109,6 +109,7 @@ namespace CriServer
 
         private void UdpListen(ILogger logger)
         {
+            Console.WriteLine("Console says: UdpListen() thread started.");
             logger.Information("UdpListen() thread started.");
             udpListener = new UdpClient(UDP_PORT);
             while (true)
