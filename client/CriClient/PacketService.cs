@@ -13,7 +13,8 @@ namespace CriClient
 {
     static class PacketService
     {
-        static Timer HbTimer = new Timer();
+        static Timer HbTimer;
+
         const int USERNAME_MAX_LENGTH = 16;
         const int PASSWORD_MAX_LENGTH = 16;
         const int TCP_PORT = 5555;
@@ -58,15 +59,16 @@ namespace CriClient
         }
         public static void SendHeartbeat(string username)
         {
-            HbTimer.Interval = 6000;
+            HbTimer = new Timer() { Interval = 6000, AutoReset = true };
             HbTimer.Elapsed += (sender, e) => HeartBeat(sender, e, username);
-            HbTimer.AutoReset = true;
-            HbTimer.Enabled = true;
+            HbTimer.Start();
         }
 
         public static void KillHeartbeat()
         {
-            HbTimer.Enabled = false;
+            HbTimer.Stop();
+            HbTimer.Dispose();
+            HbTimer = null;
         }
         private static void HeartBeat(object sender, ElapsedEventArgs e, string username)
         {
@@ -166,10 +168,19 @@ namespace CriClient
             }
         }
 
-        public static void Logout()
+        public static Response Logout(string username)
         {
-            string packet = ProtocolCode.Logout.ToString();
-            SendPacket(false, packet);
+            string packet = ProtocolCode.Logout.ToString() + "\n" + username;
+            string answer = SendPacket(false, packet);
+            string[] tokenizedanswer;
+            tokenizedanswer = answer.Split("\n");
+            if(tokenizedanswer[1] == "OK")
+            {
+                KillHeartbeat();
+                return new Response { IsSuccessful = true, MessageToUser = "Logged out. " };
+            }
+            return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
+
         }
 
         public static void Hello(string username)
@@ -201,6 +212,7 @@ namespace CriClient
 
                 if (tokenizedanswer[1] == "OFFLINE")
                 {
+                    Dataholder.userIPs.Add(username, tokenizedanswer[2]);
                     return new Response {IsSuccessful = false, MessageToUser = "User is offline. "};
                 }
 
@@ -210,6 +222,7 @@ namespace CriClient
                 }
                 if(tokenizedanswer[1] == "OK")
                 {
+                    Dataholder.userIPs.Add(username, tokenizedanswer[2]);
                     return new Response { IsSuccessful = true, MessageToUser = "User is online. " };
                 }
                 return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
@@ -288,6 +301,7 @@ namespace CriClient
             }
             if(tokenizedanswer[1] == "OK")
             {
+                //Dataholder.userIPs.Add(username, tokenizedanswer[2]);
                 return new Response { IsSuccessful = true, MessageToUser = string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2)) };
             }
             return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
