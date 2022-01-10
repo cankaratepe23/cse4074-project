@@ -23,5 +23,15 @@
         {
             return Value;
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not ProtocolCode protocolCode)
+            {
+                return false;
+            }
+
+            return Value == protocolCode.Value;
+        }
     }
 }

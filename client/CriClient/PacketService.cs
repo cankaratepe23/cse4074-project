@@ -40,7 +40,7 @@ namespace CriClient
         }
         public void SendHeartbeat(string username)
         {
-            Timer HbTimer = new System.Timers.Timer();
+            Timer HbTimer = new Timer();
             HbTimer.Interval = 6000;
             HbTimer.Elapsed += (sender, e) => HeartBeat(sender, e, username);
             HbTimer.AutoReset = true;
@@ -52,10 +52,10 @@ namespace CriClient
             //SendPacket(true, ProtocolCode.Hello + "\n" + username);
             Console.WriteLine("Heartbeat sent");
         }
-        public void ReceivePacket()
+        public string ReceivePacket()
         {
             IPAddress ipad = IPAddress.Parse(SERVER);
-            TcpListener server = new TcpListener(ipad, TCP_PORT);
+            TcpListener server = new TcpListener(IPAddress.Any, TCP_PORT);
             server.Start();
             List<byte> bytes = new List<byte>();
             string data = null;
@@ -68,20 +68,39 @@ namespace CriClient
                 bytes.Add((byte)i);
             }
             data = System.Text.Encoding.UTF8.GetString(bytes.ToArray());
-            Console.WriteLine("Received: {0}", data);
+            //Console.WriteLine("Received: {0}", data);
             client.Close();
             server.Stop();
+            return data;
         }
 
 
 
-        public void Register(string username, string password)
+        public Response Register(string username, string password)
         {
             if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Register + "\n" + username + "\n" + password;
                 //string packet = $"00\n{username}\n{password}";
                 SendPacket(false, packet);
+                string[] tokenizedanswer;
+                int counter = 0;
+                do
+                {
+                    string answer = ReceivePacket();
+                    tokenizedanswer = answer.Split("\n");
+                    counter++;
+                } while (!ProtocolCode.Register.Equals(tokenizedanswer[0]) && counter < 2);
+                
+                if (tokenizedanswer[1] == "ALREADY_EXISTS")
+                {
+                    return new Response() { IsSuccessful = false, MessageToUser = "This user already exists." };
+                }
+                if(tokenizedanswer[1] == "OK")
+                {
+                    return new Response() { IsSuccessful = true, MessageToUser = "Registered Successfully" };
+                }
+                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
             }
             else
             {
@@ -91,16 +110,33 @@ namespace CriClient
 
         }
 
-        public void Login(string username, string password)
+        public Response Login(string username, string password)
         {
             if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Login + "\n" + username + "\n" + password;
                 SendPacket(false, packet);
+                string[] tokenizedanswer;
+                int counter = 0;
+                do
+                {
+                    string answer = ReceivePacket();
+                    tokenizedanswer = answer.Split("\n");
+                    counter++;
+                } while (!ProtocolCode.Login.Equals(tokenizedanswer[0]) && counter < 2);
+                if (tokenizedanswer[1] == "OK")
+                {
+                    return new Response { IsSuccessful = true, MessageToUser = "Login successful. " };
+                }
+                if (tokenizedanswer[1] == "FAIL")
+                {
+                    return new Response { IsSuccessful = false, MessageToUser = "Cannot login. " };
+                }
+                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
             }
             else
             {
-                throw new Exception("username or password char limit exceededvvvv");
+                throw new Exception("username or password char limit exceeded");
             }
         }
 
@@ -123,12 +159,29 @@ namespace CriClient
             }
         }
 
-        public void Search(string username)
+        public Response Search(string username)
         {
             if (username.Length <= USERNAME_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Search + "\n" + username;
                 SendPacket(false, packet);
+                string[] tokenizedanswer;
+                int counter = 0;
+                do
+                {
+                    string answer = ReceivePacket();
+                    tokenizedanswer = answer.Split("\n");
+                    counter++;
+                } while (!ProtocolCode.Search.Equals(tokenizedanswer[0]) && counter < 2);
+                if (tokenizedanswer[1] == "OFFLINE")
+                {
+                    return new Response { IsSuccessful = false, MessageToUser = "User is offline. " };
+                }
+                if (tokenizedanswer[1] == "NOT_FOUND")
+                {
+                    return new Response { IsSuccessful = false, MessageToUser = "User not found. " };
+                }
+                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
             }
             else
             {
@@ -161,6 +214,14 @@ namespace CriClient
             {
                 string packet = ProtocolCode.GroupCreate + "\n" + string.Join("\n", usernames);
                 SendPacket(false, packet);
+                string[] tokenizedanswer;
+                int counter = 0;
+                do
+                {
+                    string answer = ReceivePacket();
+                    tokenizedanswer = answer.Split("\n");
+                    counter++;
+                } while (!ProtocolCode.GroupCreate.Equals(tokenizedanswer[0]) && counter < 2);
             }
             else
             {
@@ -172,6 +233,14 @@ namespace CriClient
         {
             string packet = ProtocolCode.GroupSearch + "\n" + gid;
             SendPacket(false, packet);
+            string[] tokenizedanswer;
+            int counter = 0;
+            do
+            {
+                string answer = ReceivePacket();
+                tokenizedanswer = answer.Split("\n");
+                counter++;
+            } while (!ProtocolCode.GroupSearch.Equals(tokenizedanswer[0]) && counter < 2);
         }
 
         public void GroupText(Guid gid, string username, string message)

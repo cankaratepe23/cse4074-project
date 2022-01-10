@@ -19,17 +19,18 @@ namespace CriClient
             {
 
                 Console.WriteLine("1.Register\n2.Login\n3.HeartBeat");
-            string menuopt = Console.ReadLine();
-            menuopt = menuopt.ToLower();
-            Console.WriteLine("Type username of max. 16 characters");
-            string uname = Console.ReadLine();
-            Console.WriteLine("Type password of max. 16 characters");
-            string pword = Console.ReadLine();
+                string menuopt = Console.ReadLine();
+                menuopt = menuopt.ToLower();
+                Console.WriteLine("Type username of max. 16 characters");
+                string uname = Console.ReadLine();
+                Console.WriteLine("Type password of max. 16 characters");
+                string pword = Console.ReadLine();
 
-            
+
                 if (menuopt == "1" || menuopt == "register")
                 {
-                    packetservice.Register(uname, pword);
+                    var response = packetservice.Register(uname, pword);
+                    Console.WriteLine(response.MessageToUser);
                     packetsent = true;
                 }
                 else if (menuopt == "3" || menuopt == "heartbeat")
@@ -39,17 +40,18 @@ namespace CriClient
                 }
                 else if (menuopt == "2" || menuopt == "login")
                 {
-                    packetservice.Login(uname, pword);
+                    var response = packetservice.Login(uname, pword);
+                    Console.WriteLine(response.MessageToUser);
                     packetsent = true;
                 }
                 else
                 {
                     System.Environment.Exit(0);
                 }
-                
+
             }
 
-            
+
 
             //packetservice.ReceivePacket();
 
