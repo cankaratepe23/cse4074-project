@@ -50,27 +50,26 @@ namespace CriServer
                     {
                         TcpClient client = tcpListener.AcceptTcpClient();
                         NetworkStream incomingStream = client.GetStream();
-                        List<int> incomingBuffer = new();
-                        int currentRead;
-                        while ((currentRead = incomingStream.ReadByte()) != -1)
-                        {
-                            incomingBuffer.Add(currentRead);
-                        }
+                        
+                        Byte[] incomingBuffer = new Byte[256];
+                        incomingStream.Read(incomingBuffer, 0, incomingBuffer.Length);
 
                         // Simulate long and blocking operation to test multi-threaded functionality
-                        logger.Information("Received TCP connection from {IP} Sleeping...", client.Client.RemoteEndPoint);
+                        logger.Information("Received TCP connection from {IP} Sleeping...",
+                            client.Client.RemoteEndPoint);
                         //Thread.Sleep(2000);
                         string messageReceived =
-                            Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte)b).ToArray());
+                            Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte) b).Where(b => b != 0).ToArray());
                         logger.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint,
                             messageReceived);
 
                         string[] parsedMessage = messageReceived.Split("\n");
                         ProtocolCode method = new ProtocolCode(parsedMessage[0]);
                         string[] payload = parsedMessage.Skip(1).ToArray();
-                        IPAddress ipAddress = ((IPEndPoint)client.Client.RemoteEndPoint)?.Address;
+                        IPAddress ipAddress = ((IPEndPoint) client.Client.RemoteEndPoint)?.Address;
 
-                        RegistryResponse registryResponse = RegistryResponse.LOGIN_SUCCESSFUL;  // to be changed, handle logout
+                        RegistryResponse
+                            registryResponse = RegistryResponse.LOGIN_SUCCESSFUL; // to be changed, handle logout
                         if (ProtocolCode.Register.Equals(method))
                             registryResponse = Register(payload);
                         else if (ProtocolCode.Login.Equals(method))
@@ -80,7 +79,10 @@ namespace CriServer
                         else if (ProtocolCode.Search.Equals(method))
                             registryResponse = Search(payload);
 
-                        SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString(), tcpPort: ((IPEndPoint)client.Client.RemoteEndPoint).Port);
+                        byte[] data = Encoding.UTF8.GetBytes(registryResponse.ToString());
+                        incomingStream.Write(data, 0, data.Length);
+                        incomingStream.Close();
+                        //SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString(), tcpPort: ((IPEndPoint)client.Client.RemoteEndPoint).Port);
                     }).Start();
                 }
             }
