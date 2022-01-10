@@ -35,7 +35,7 @@ namespace CriServer
 
         private void TcpListen(ILogger logger)
         {
-            logger.Information("logger from TcpListen()");
+            logger.Information("TcpListen() thread started.");
             tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
             tcpListener.Start();
             while (true)
@@ -80,7 +80,8 @@ namespace CriServer
                         else if (ProtocolCode.Search.Equals(method))
                             registryResponse = Search(payload);
 
-                        SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString(), tcpPort: ((IPEndPoint)client.Client.RemoteEndPoint).Port);
+                        SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString());
+                        logger.Information("Sent TCP respone to {IP}:\n{Message}", client.Client.RemoteEndPoint, registryResponse);
                     }).Start();
                 }
             }
@@ -105,6 +106,7 @@ namespace CriServer
 
         private void UdpListen(ILogger logger)
         {
+            logger.Information("UdpListen() thread started.");
             udpListener = new UdpClient(UDP_PORT);
             while (true)
             {
