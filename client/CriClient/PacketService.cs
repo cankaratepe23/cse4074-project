@@ -14,10 +14,10 @@ namespace CriClient
     static class PacketService
     {
         public static bool tcpPacketIncoming = false;
+        public static bool canAcceptChatRequest = false;
         static Timer HbTimer;
         private static TcpListener tcpListener;
         private static bool isListeningEnabled = false;
-        private static bool canAcceptChatRequest = false;
 
         const int USERNAME_MAX_LENGTH = 16;
         const int PASSWORD_MAX_LENGTH = 16;
@@ -92,6 +92,7 @@ namespace CriClient
         public static void StopTcpListen()
         {
             isListeningEnabled = false;
+            canAcceptChatRequest = false;
         }
 
         private static void TcpListen()
@@ -322,17 +323,39 @@ namespace CriClient
             }
         }
 
-        public static void Chat(string username)
+        public static Response Chat(string username)
         {
             if (username.Length > USERNAME_MAX_LENGTH)
             {
                 throw new Exception("Username char limit exceeded");
             }
-            string packet = ProtocolCode.Chat.ToString() + "\n" + username;
-            string destIp = Dataholder.userIPs[username];
-            Console.WriteLine("Sending P2P chat request to: {0}", destIp);
-            string answer = SendPacket(false, packet, destination: destIp);
-            Console.WriteLine("The answer was:\n{0}", answer);
+            var searchanswer = Search(username);
+            if (searchanswer.IsSuccessful)
+            {
+                string packet = ProtocolCode.Chat.ToString() + "\n" + username;
+                string destIp = Dataholder.userIPs[username];
+                Console.WriteLine("Sending P2P chat request to: {0}", destIp);
+                string answer = SendPacket(false, packet, destination: destIp);
+                string[] tokenizedanswer = answer.Split('\n');
+                if (tokenizedanswer[1] == "BUSY")
+                {
+                    return new Response() { IsSuccessful = false, MessageToUser = "This user is currently busy." };
+                }
+                if (tokenizedanswer[1] == "REJECT")
+                {
+                    return new Response() { IsSuccessful = false, MessageToUser = "The user has rejected your chat request." };
+                }
+                if (tokenizedanswer[1] == "OK")
+                {
+                    return new Response() { IsSuccessful = true, MessageToUser = "" };
+                }
+                return new Response() { IsSuccessful = false, MessageToUser = "Unkown error." };
+            }
+            else
+            {
+                return searchanswer;
+            }
+            
         }
 
         public static void Text(string username, string message)
