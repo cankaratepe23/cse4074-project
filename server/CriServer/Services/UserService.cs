@@ -54,15 +54,17 @@ namespace CriServer.Services
             return RegistryResponse.LOGIN_SUCCESSFUL;
         }
 
-        public void LogoutUser(IPAddress ipAddress)
+        public RegistryResponse LogoutUser(IPAddress ipAddress)
         {
             var user = GetUserByIPAddress(ipAddress);
 
             if (user == null)
-                throw new ArgumentException("IP address is not found!");
+                return RegistryResponse.LOGOUT_FAIL;
 
             user.IpAddress = IPAddress.None;
             _criContext.SaveChanges();
+            
+            return RegistryResponse.LOGOUT_SUCCESSFUL;
         }
 
         public RegistryResponse Search(string username)

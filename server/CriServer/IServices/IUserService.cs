@@ -6,7 +6,7 @@ namespace CriServer.IServices
     {
         RegistryResponse RegisterUser(string username, string password);
         RegistryResponse LoginUser(string username, string password, IPAddress ipAddress);
-        void LogoutUser(IPAddress ipAddress);
+        RegistryResponse LogoutUser(IPAddress ipAddress);
         RegistryResponse Search(string username);
     }
 }
