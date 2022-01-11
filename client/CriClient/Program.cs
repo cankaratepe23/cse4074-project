@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 
 namespace CriClient
@@ -28,13 +24,13 @@ namespace CriClient
 
                 if (menuopt == "1" || menuopt == "register")
                 {
-                    var response = PacketService.Register(uname, pword);
+                    Response response = PacketService.Register(uname, pword);
                     Console.WriteLine(response.MessageToUser);
                     packetsent = true;
                 }
                 else if (menuopt == "2" || menuopt == "login")
                 {
-                    var response = PacketService.Login(uname, pword);
+                    Response response = PacketService.Login(uname, pword);
                     if (response.IsSuccessful == true)
                     {
                         LoggedinUsername = uname;
@@ -47,7 +43,7 @@ namespace CriClient
                         Console.WriteLine(response.MessageToUser);
                         packetsent = true;
                     }
-                    
+
                 }
                 else
                 {
@@ -60,7 +56,7 @@ namespace CriClient
         public static void afterLogin()
         {
             PacketService.StartTcpListen();
-            while(true)
+            while (true)
             {
                 if (PacketService.tcpPacketIncoming)
                 {
@@ -79,7 +75,7 @@ namespace CriClient
                 {
                     Console.WriteLine("Please provide the username you would like to search ");
                     string user = Console.ReadLine();
-                    var response = PacketService.Search(user);
+                    Response response = PacketService.Search(user);
                     Console.WriteLine(response.MessageToUser);
                 }
                 else if (chooseaction == "2")
@@ -107,14 +103,14 @@ namespace CriClient
                         users.Add(userinput);
                         userinput = Console.ReadLine();
                     }
-                    var response = PacketService.GroupCreate(users);
+                    Response response = PacketService.GroupCreate(users);
                     Console.WriteLine(response.MessageToUser);
                 }
                 else if (chooseaction == "4")
                 {
                     Console.WriteLine("Please provide the Group ID og the group you would like to search");
                     Guid GrID = Guid.Parse(Console.ReadLine());
-                    var response = PacketService.GroupSearch(GrID);
+                    Response response = PacketService.GroupSearch(GrID);
                     Console.WriteLine(response.MessageToUser);
                 }
                 else if (chooseaction == "5")
@@ -127,7 +123,7 @@ namespace CriClient
                 }
                 else if (chooseaction == "6")
                 {
-                    var Response = PacketService.Logout(LoggedinUsername);
+                    Response Response = PacketService.Logout(LoggedinUsername);
                     Console.WriteLine(Response.MessageToUser);
                     LoggedinUsername = "";
                     Dataholder.loggedInUserName = "";
@@ -135,7 +131,7 @@ namespace CriClient
                     return;
                 }
             }
-            
+
         }
     }
 }
