@@ -2,6 +2,7 @@
 
 namespace CriServer
 {
+    // Represents the encoded method in the protocol 
     class ProtocolCode
     {
         private string Value { get; set; }

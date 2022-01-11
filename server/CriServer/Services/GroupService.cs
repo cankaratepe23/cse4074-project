@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CriServer.Services
 {
+    // Database access layer for groups
     class GroupService : IGroupService
     {
         private const int MAX_USER_COUNT = 100;

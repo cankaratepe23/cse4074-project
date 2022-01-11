@@ -5,6 +5,7 @@ using CriServer.Dtos;
 
 namespace CriServer
 {
+    // Represents the response returned from the registry
     public class RegistryResponse
     {
         private string Value { get; }

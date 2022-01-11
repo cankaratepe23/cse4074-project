@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CriServer.Services
 {
+    // Database access layer for users
     class UserService : IUserService
     {
         private const int USERNAME_MAX_CHARACTER_LIMIT = 16;
