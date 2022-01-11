@@ -77,7 +77,7 @@ namespace CriClient
         private static void HeartBeat(object sender, ElapsedEventArgs e, string username)
         {
             SendPacket(true, ProtocolCode.Hello + "\n" + username);
-            Console.WriteLine("Heartbeat sent");
+            //Console.WriteLine("Heartbeat sent");
         }
 
         public static void StartTcpListen()
@@ -139,7 +139,6 @@ namespace CriClient
             while (!(userOption == "Y" || userOption == "N"))
             {
                 Console.WriteLine("\nIncoming chat request from {0}", fromIp);
-                ;
                 if (Dataholder.userIPs.ContainsValue(fromIp))
                 {
                     Console.WriteLine("This IP was last seen online as user {0}", Dataholder.userIPs.FirstOrDefault((userIp) => userIp.Value == fromIp).Key);
