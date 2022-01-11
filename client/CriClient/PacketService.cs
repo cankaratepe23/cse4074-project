@@ -14,25 +14,27 @@ namespace CriClient
     static class PacketService
     {
         static Timer HbTimer;
+        private static TcpListener tcpListener;
+        private static bool isListeningEnabled = false;
 
         const int USERNAME_MAX_LENGTH = 16;
         const int PASSWORD_MAX_LENGTH = 16;
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
-        const string SERVER = "192.168.1.24";
+        const string SERVER = "172.29.91.122";
             //"numellus.tk";
             //"192.168.1.24";
             //"127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
 
-        public static string SendPacket(bool isUdp, string payload)
+        public static string SendPacket(bool isUdp, string payload, string destination = SERVER)
         {
             byte[] data = Encoding.UTF8.GetBytes(payload);
 
             if (!isUdp)
             {
-                TcpClient client = new TcpClient(SERVER, TCP_PORT);
+                TcpClient client = new TcpClient(destination, TCP_PORT);
                 NetworkStream stream = client.GetStream();
                 stream.Write(data, 0, data.Length);
 
@@ -52,11 +54,12 @@ namespace CriClient
             else
             {
                 UdpClient udpClient = new UdpClient();
-                udpClient.Send(data, data.Length, SERVER, UDP_PORT);
+                udpClient.Send(data, data.Length, destination, UDP_PORT);
             }
 
             return "";
         }
+
         public static void SendHeartbeat(string username)
         {
             HbTimer = new Timer() { Interval = 6000, AutoReset = true };
@@ -75,9 +78,55 @@ namespace CriClient
             SendPacket(true, ProtocolCode.Hello + "\n" + username);
             Console.WriteLine("Heartbeat sent");
         }
+
+        public static void StartTcpListen()
+        {
+            isListeningEnabled = true;
+            Thread tcpListenThread = new Thread(() => TcpListen());
+        }
+
+        public static void StopTcpListen()
+        {
+            isListeningEnabled = false;
+        }
+
+        private static void TcpListen()
+        {
+            tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
+            tcpListener.Start();
+            while (isListeningEnabled)
+            {
+                if (!tcpListener.Pending())
+                {
+                    Thread.Sleep(20);
+                }
+                else
+                {
+                    new Thread(() =>
+                    {
+                        TcpClient client = tcpListener.AcceptTcpClient();
+                        NetworkStream incomingStream = client.GetStream();
+
+                        byte[] incomingBuffer = new byte[256];
+                        incomingStream.Read(incomingBuffer, 0, incomingBuffer.Length);
+                        string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select(b => b).Where(b => b != 0).ToArray());
+
+                        string[] parsedMessage = messageReceived.Split("\n");
+
+                        string response = "";
+                        byte[] data = Encoding.UTF8.GetBytes(response);
+                        incomingStream.Write(data, 0, data.Length);
+                        incomingStream.Close();
+                    }).Start();
+                }
+            }
+            tcpListener.Stop();
+            tcpListener = null;
+        }
+
+
         public static string ReceivePacket()
         {
-            //IPAddress ipad = IPAddress.Parse(SERVER);
             TcpListener server = new TcpListener(IPAddress.Any, TCP_PORT);
             server.Start();
             List<byte> bytes = new List<byte>();
@@ -91,7 +140,7 @@ namespace CriClient
                 bytes.Add((byte) i);
             }
 
-            data = System.Text.Encoding.UTF8.GetString(bytes.ToArray());
+            data = Encoding.UTF8.GetString(bytes.ToArray());
             Console.WriteLine("Received: {0}", data);
             client.Close();
             server.Stop();
@@ -212,7 +261,6 @@ namespace CriClient
 
                 if (tokenizedanswer[1] == "OFFLINE")
                 {
-                    Dataholder.userIPs.Add(username, tokenizedanswer[2]);
                     return new Response {IsSuccessful = false, MessageToUser = "User is offline. "};
                 }
 
@@ -233,9 +281,13 @@ namespace CriClient
             }
         }
 
-        public static void Chat()
+        public static void Chat(string username)
         {
-            string packet = ProtocolCode.Chat.ToString();
+            if (username.Length > USERNAME_MAX_LENGTH)
+            {
+                throw new Exception("Username char limit exceeded");
+            }
+            string packet = ProtocolCode.Chat.ToString() + "\n" + username;
             SendPacket(false, packet);
         }
 
@@ -257,15 +309,8 @@ namespace CriClient
             if (usernames.Count <= MAX_USER_COUNT)
             {
                 string packet = ProtocolCode.GroupCreate + "\n" + string.Join("\n", usernames);
-                SendPacket(false, packet);
-                string[] tokenizedanswer;
-                int counter = 0;
-                do
-                {
-                    string answer = ReceivePacket();
-                    tokenizedanswer = answer.Split("\n");
-                    counter++;
-                } while (!ProtocolCode.GroupCreate.Equals(tokenizedanswer[0]) && counter < 2);
+                string answer = SendPacket(false, packet);
+                string[] tokenizedanswer = answer.Split("\n");
                 if(tokenizedanswer[1] == "MEMBERS_NOT_FOUND")
                 {
                     var listAnswer = new List<string>(tokenizedanswer);
@@ -286,15 +331,8 @@ namespace CriClient
         public static Response GroupSearch(Guid gid)
         {
             string packet = ProtocolCode.GroupSearch + "\n" + gid;
-            SendPacket(false, packet);
-            string[] tokenizedanswer;
-            int counter = 0;
-            do
-            {
-                string answer = ReceivePacket();
-                tokenizedanswer = answer.Split("\n");
-                counter++;
-            } while (!ProtocolCode.GroupSearch.Equals(tokenizedanswer[0]) && counter < 2);
+            string answer = SendPacket(false, packet);
+            string[] tokenizedanswer = answer.Split("\n");
             if(tokenizedanswer[1] == "NOT_FOUND")
             {
                 return new Response { IsSuccessful = false, MessageToUser = "Group with the given ID doesn't exist." };

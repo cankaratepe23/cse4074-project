@@ -57,6 +57,7 @@ namespace CriClient
 
         public static void afterLogin()
         {
+            PacketService.StartTcpListen();
             while(true)
             {
                 Console.WriteLine("1.Search\n2.Chat\n3.Create Group\n4.Search Group\n5.Text Group\n6.Logout");
@@ -74,9 +75,7 @@ namespace CriClient
                 {
                     Console.WriteLine("Please provide the username you would like to chat ");
                     string user = Console.ReadLine();
-                    Console.WriteLine("Please provide the text you would like to send");
-                    string message = Console.ReadLine();
-                    
+                    PacketService.Chat(user);
                 }
                 else if (chooseaction == "3")
                 {
@@ -111,10 +110,16 @@ namespace CriClient
                     var Response = PacketService.Logout(LoggedinUsername);
                     Console.WriteLine(Response.MessageToUser);
                     LoggedinUsername = "";
+                    PacketService.StopTcpListen();
                     return;
                 }
             }
             
+        }
+    
+        public static void StartChat()
+        {
+
         }
     }
 }
