@@ -142,6 +142,7 @@ namespace CriClient
 
         public static void StartChat(string destination)
         {
+            canAcceptChatRequest = false;
             StringBuilder outgoingStringBuffer = new StringBuilder("> ");
             string destinationIp = "";
             if (Dataholder.userIPs.ContainsKey(destination))
@@ -166,6 +167,7 @@ namespace CriClient
             }
             Console.Clear();
             Console.WriteLine("---------- Chat with {0} ----------", destination);
+            Console.WriteLine("--------- Type :q to exit ---------");
             Console.Write("> ");
             while (true)
             {
@@ -179,6 +181,10 @@ namespace CriClient
                             continue;
                         }
                         Text(Dataholder.loggedInUserName, outgoingStringBuffer.Remove(0, 2).ToString(), destinationIp);
+                        if (outgoingStringBuffer.ToString() == ":q")
+                        {
+                            break;
+                        }
                         outgoingStringBuffer.Clear().Append("> ");
                         Console.Write("\n> ");
                         continue;
@@ -199,14 +205,23 @@ namespace CriClient
                 }
                 if (isTextAvailable)
                 {
+                    isTextAvailable = false;
+                    if (lastTextMessage == ":q")
+                    {
+                        break;
+                    }
                     int currentLine = Console.CursorTop;
                     Console.SetCursorPosition(0, currentLine);
                     Console.Write(new string(' ', Console.WindowWidth));
                     Console.SetCursorPosition(0, currentLine);
                     Console.WriteLine(lastTextMessage);
-                    isTextAvailable = false;
                     Console.Write(outgoingStringBuffer.ToString());
                 }
+
+                Console.Clear();
+                canAcceptChatRequest = true;
+                isChatting = false;
+                isTextAvailable = false;
             }
         }
 
@@ -457,7 +472,7 @@ namespace CriClient
                 string packet = ProtocolCode.GroupCreate + "\n" + string.Join("\n", usernames);
                 string answer = SendPacket(false, packet);
                 string[] tokenizedanswer = answer.Split("\n");
-                if(tokenizedanswer[1] == "MEMBERS_NOT_FOUND")
+                if(tokenizedanswer[1] == "NOT_FOUND")
                 {
                     var listAnswer = new List<string>(tokenizedanswer);
                     return new Response { IsSuccessful = false, MessageToUser = "Following users are not found: " + string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2))};

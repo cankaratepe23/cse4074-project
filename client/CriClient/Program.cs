@@ -89,9 +89,7 @@ namespace CriClient
                     Response response = PacketService.Chat(user);
                     if (response.IsSuccessful)
                     {
-                        PacketService.canAcceptChatRequest = false;
                         PacketService.StartChat(user);
-                        PacketService.canAcceptChatRequest = true;
                         continue;
                     }
                     else
