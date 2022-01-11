@@ -65,14 +65,14 @@ namespace CriServer
                         logger.Information("Received TCP connection from {IP} Sleeping...",
                             client.Client.RemoteEndPoint);
                         string messageReceived =
-                            Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte) b).Where(b => b != 0).ToArray());
+                            Encoding.UTF8.GetString(incomingBuffer.Select(b => b).Where(b => b != 0).ToArray());
                         logger.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint,
                             messageReceived);
 
                         string[] parsedMessage = messageReceived.Split("\n");
                         ProtocolCode method = new ProtocolCode(parsedMessage[0]);
                         string[] payload = parsedMessage.Skip(1).ToArray();
-                        IPAddress ipAddress = ((IPEndPoint) client.Client.RemoteEndPoint)?.Address;
+                        IPAddress ipAddress = ((IPEndPoint)client.Client.RemoteEndPoint)?.Address;
 
                         RegistryResponse registryResponse = null;
                         if (ProtocolCode.Register.Equals(method))

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace CriServer
+﻿namespace CriServer
 {
     // Represents the encoded method in the protocol 
     class ProtocolCode
@@ -25,7 +23,7 @@ namespace CriServer
             return Value;
         }
 
-        public override bool Equals(Object obj)
+        public override bool Equals(object obj)
         {
             if (obj is string)
                 return Value == obj.ToString();

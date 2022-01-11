@@ -1,7 +1,6 @@
-using System;
+using CriServer.Dtos;
 using System.Collections.Generic;
 using System.Net;
-using CriServer.Dtos;
 
 namespace CriServer
 {
@@ -24,7 +23,7 @@ namespace CriServer
 
         public static RegistryResponse LOGIN_SUCCESSFUL => new(ProtocolCode.Login + "\nOK");
         public static RegistryResponse LOGIN_FAIL => new(ProtocolCode.Login + "\nFAIL");
-        
+
         public static RegistryResponse LOGOUT_SUCCESSFUL => new(ProtocolCode.Logout + "\nOK");
 
         public static RegistryResponse SEARCH_USER_ONLINE(IPAddress ipAddress) =>
@@ -38,15 +37,15 @@ namespace CriServer
             new(ProtocolCode.GroupCreate + "\nNOT_FOUND\n" + string.Join("\n", usernames));
         public static RegistryResponse GROUP_CREATE_FAIL => new(ProtocolCode.GroupCreate + "\nFAIL");
 
-        public static RegistryResponse GROUP_SEARCH_SUCCESSFUL(List<UserIpDto> userIpDtos) => new(ProtocolCode.GroupSearch + "\nNOT_FOUND"+ string.Join("\n", userIpDtos));
+        public static RegistryResponse GROUP_SEARCH_SUCCESSFUL(List<UserIpDto> userIpDtos) => new(ProtocolCode.GroupSearch + "\nNOT_FOUND" + string.Join("\n", userIpDtos));
         public static RegistryResponse GROUP_SEARCH_NOT_FOUND => new(ProtocolCode.GroupSearch + "\nNOT_FOUND");
 
         public override string ToString()
         {
             return Value;
         }
-        
-        public override bool Equals(Object obj)
+
+        public override bool Equals(object obj)
         {
             if (obj is string)
                 return Value == obj.ToString();
