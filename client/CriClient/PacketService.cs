@@ -13,26 +13,30 @@ namespace CriClient
 {
     static class PacketService
     {
+        public static bool tcpPacketIncoming = false;
         static Timer HbTimer;
+        private static TcpListener tcpListener;
+        private static bool isListeningEnabled = false;
+        private static bool canAcceptChatRequest = false;
 
         const int USERNAME_MAX_LENGTH = 16;
         const int PASSWORD_MAX_LENGTH = 16;
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
-        const string SERVER = "192.168.1.24";
+        const string SERVER = "172.29.91.122";
             //"numellus.tk";
             //"192.168.1.24";
             //"127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
 
-        public static string SendPacket(bool isUdp, string payload)
+        public static string SendPacket(bool isUdp, string payload, string destination = SERVER)
         {
             byte[] data = Encoding.UTF8.GetBytes(payload);
 
             if (!isUdp)
             {
-                TcpClient client = new TcpClient(SERVER, TCP_PORT);
+                TcpClient client = new TcpClient(destination, TCP_PORT);
                 NetworkStream stream = client.GetStream();
                 stream.Write(data, 0, data.Length);
 
@@ -52,11 +56,12 @@ namespace CriClient
             else
             {
                 UdpClient udpClient = new UdpClient();
-                udpClient.Send(data, data.Length, SERVER, UDP_PORT);
+                udpClient.Send(data, data.Length, destination, UDP_PORT);
             }
 
             return "";
         }
+
         public static void SendHeartbeat(string username)
         {
             HbTimer = new Timer() { Interval = 6000, AutoReset = true };
@@ -73,11 +78,89 @@ namespace CriClient
         private static void HeartBeat(object sender, ElapsedEventArgs e, string username)
         {
             SendPacket(true, ProtocolCode.Hello + "\n" + username);
-            Console.WriteLine("Heartbeat sent");
+            //Console.WriteLine("Heartbeat sent");
         }
+
+        public static void StartTcpListen()
+        {
+            isListeningEnabled = true;
+            canAcceptChatRequest = true;
+            Thread tcpListenThread = new Thread(() => TcpListen());
+            tcpListenThread.Start();
+        }
+
+        public static void StopTcpListen()
+        {
+            isListeningEnabled = false;
+        }
+
+        private static void TcpListen()
+        {
+            tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
+            tcpListener.Start();
+            while (isListeningEnabled)
+            {
+                if (!tcpListener.Pending())
+                {
+                    Thread.Sleep(20);
+                }
+                else
+                {
+                    new Thread(() =>
+                    {
+                        TcpClient client = tcpListener.AcceptTcpClient();
+                        tcpPacketIncoming = true;
+                        Console.WriteLine("Accepted TCP client.");
+                        NetworkStream incomingStream = client.GetStream();
+
+                        byte[] incomingBuffer = new byte[256];
+                        incomingStream.Read(incomingBuffer, 0, incomingBuffer.Length);
+                        string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select(b => b).Where(b => b != 0).ToArray());
+
+                        string[] parsedMessage = messageReceived.Split("\n");
+                        
+                        string response = RespondToChatRequest(client.Client.RemoteEndPoint.ToString());
+                        byte[] data = Encoding.UTF8.GetBytes(response);
+                        incomingStream.Write(data, 0, data.Length);
+                        incomingStream.Close();
+                        tcpPacketIncoming = false;
+                    }).Start();
+                }
+            }
+            tcpListener.Stop();
+            tcpListener = null;
+        }
+
+        private static string RespondToChatRequest(string fromIp)
+        { // TODO decouple this as this should be a UI method
+            if (!canAcceptChatRequest)
+            {
+                return ProtocolCode.Chat + "\nBUSY";
+            }
+            char userOption = '\0';
+            while (!(userOption == 'Y' || userOption == 'N'))
+            {
+                Console.WriteLine("\nIncoming chat request from {0}", fromIp);
+                if (Dataholder.userIPs.ContainsValue(fromIp))
+                {
+                    Console.WriteLine("This IP was last seen online as user {0}", Dataholder.userIPs.FirstOrDefault((userIp) => userIp.Value == fromIp).Key);
+                }
+                Console.Write("Would you like to accept the request? (Enter, and then Y or N)");
+                userOption = char.ToUpper(Console.ReadKey().KeyChar);
+                Console.WriteLine();
+            }
+            if (userOption == 'Y')
+            {
+                return ProtocolCode.Chat + "\nOK";
+            }
+            else
+            {
+                return ProtocolCode.Chat + "\nREJECT";
+            }
+        }
+
         public static string ReceivePacket()
         {
-            //IPAddress ipad = IPAddress.Parse(SERVER);
             TcpListener server = new TcpListener(IPAddress.Any, TCP_PORT);
             server.Start();
             List<byte> bytes = new List<byte>();
@@ -91,7 +174,7 @@ namespace CriClient
                 bytes.Add((byte) i);
             }
 
-            data = System.Text.Encoding.UTF8.GetString(bytes.ToArray());
+            data = Encoding.UTF8.GetString(bytes.ToArray());
             Console.WriteLine("Received: {0}", data);
             client.Close();
             server.Stop();
@@ -212,7 +295,6 @@ namespace CriClient
 
                 if (tokenizedanswer[1] == "OFFLINE")
                 {
-                    Dataholder.userIPs.Add(username, tokenizedanswer[2]);
                     return new Response {IsSuccessful = false, MessageToUser = "User is offline. "};
                 }
 
@@ -222,7 +304,14 @@ namespace CriClient
                 }
                 if(tokenizedanswer[1] == "OK")
                 {
-                    Dataholder.userIPs.Add(username, tokenizedanswer[2]);
+                    if (Dataholder.userIPs.ContainsKey(username))
+                    {
+                        Dataholder.userIPs[username] = tokenizedanswer[2];
+                    }
+                    else
+                    {
+                        Dataholder.userIPs.Add(username, tokenizedanswer[2]);
+                    }
                     return new Response { IsSuccessful = true, MessageToUser = "User is online. " };
                 }
                 return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
@@ -233,10 +322,17 @@ namespace CriClient
             }
         }
 
-        public static void Chat()
+        public static void Chat(string username)
         {
-            string packet = ProtocolCode.Chat.ToString();
-            SendPacket(false, packet);
+            if (username.Length > USERNAME_MAX_LENGTH)
+            {
+                throw new Exception("Username char limit exceeded");
+            }
+            string packet = ProtocolCode.Chat.ToString() + "\n" + username;
+            string destIp = Dataholder.userIPs[username];
+            Console.WriteLine("Sending P2P chat request to: {0}", destIp);
+            string answer = SendPacket(false, packet, destination: destIp);
+            Console.WriteLine("The answer was:\n{0}", answer);
         }
 
         public static void Text(string username, string message)
@@ -257,15 +353,8 @@ namespace CriClient
             if (usernames.Count <= MAX_USER_COUNT)
             {
                 string packet = ProtocolCode.GroupCreate + "\n" + string.Join("\n", usernames);
-                SendPacket(false, packet);
-                string[] tokenizedanswer;
-                int counter = 0;
-                do
-                {
-                    string answer = ReceivePacket();
-                    tokenizedanswer = answer.Split("\n");
-                    counter++;
-                } while (!ProtocolCode.GroupCreate.Equals(tokenizedanswer[0]) && counter < 2);
+                string answer = SendPacket(false, packet);
+                string[] tokenizedanswer = answer.Split("\n");
                 if(tokenizedanswer[1] == "MEMBERS_NOT_FOUND")
                 {
                     var listAnswer = new List<string>(tokenizedanswer);
@@ -286,15 +375,8 @@ namespace CriClient
         public static Response GroupSearch(Guid gid)
         {
             string packet = ProtocolCode.GroupSearch + "\n" + gid;
-            SendPacket(false, packet);
-            string[] tokenizedanswer;
-            int counter = 0;
-            do
-            {
-                string answer = ReceivePacket();
-                tokenizedanswer = answer.Split("\n");
-                counter++;
-            } while (!ProtocolCode.GroupSearch.Equals(tokenizedanswer[0]) && counter < 2);
+            string answer = SendPacket(false, packet);
+            string[] tokenizedanswer = answer.Split("\n");
             if(tokenizedanswer[1] == "NOT_FOUND")
             {
                 return new Response { IsSuccessful = false, MessageToUser = "Group with the given ID doesn't exist." };
