@@ -84,7 +84,9 @@ namespace CriClient
                     Response response = PacketService.Chat(user);
                     if (response.IsSuccessful)
                     {
+                        PacketService.canAcceptChatRequest = false;
                         StartChat(user);
+                        PacketService.canAcceptChatRequest = true;
                         continue;
                     }
                     else
@@ -134,6 +136,7 @@ namespace CriClient
     
         public static void StartChat(string username)
         {
+            PacketService.canAcceptChatRequest = false;
             Console.Clear();
             Console.WriteLine("---------- Chat with {0} ----------", username);
             throw new NotImplementedException();

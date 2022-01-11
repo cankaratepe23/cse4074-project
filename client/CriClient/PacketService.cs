@@ -14,10 +14,10 @@ namespace CriClient
     static class PacketService
     {
         public static bool tcpPacketIncoming = false;
+        public static bool canAcceptChatRequest = false;
         static Timer HbTimer;
         private static TcpListener tcpListener;
         private static bool isListeningEnabled = false;
-        private static bool canAcceptChatRequest = false;
 
         const int USERNAME_MAX_LENGTH = 16;
         const int PASSWORD_MAX_LENGTH = 16;
@@ -92,6 +92,7 @@ namespace CriClient
         public static void StopTcpListen()
         {
             isListeningEnabled = false;
+            canAcceptChatRequest = false;
         }
 
         private static void TcpListen()
