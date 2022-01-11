@@ -288,8 +288,10 @@ namespace CriClient
                 throw new Exception("Username char limit exceeded");
             }
             string packet = ProtocolCode.Chat.ToString() + "\n" + username;
-            string answer = SendPacket(false, packet);
-            Console.WriteLine(answer);
+            string destIp = Dataholder.userIPs[username];
+            Console.WriteLine("Sending P2P chat request to: {0}", destIp);
+            string answer = SendPacket(false, packet, destination: destIp);
+            Console.WriteLine("The answer was:\n{0}", answer);
         }
 
         public static void Text(string username, string message)
