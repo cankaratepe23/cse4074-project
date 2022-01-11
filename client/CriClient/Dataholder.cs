@@ -8,6 +8,7 @@ namespace CriClient
 {
     public static class Dataholder
     {
+        public static string loggedInUserName = "";
         public static Dictionary<string, string> userIPs = new Dictionary<string, string>();
     }
 }

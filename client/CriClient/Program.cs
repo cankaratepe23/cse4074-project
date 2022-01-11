@@ -38,6 +38,7 @@ namespace CriClient
                     if (response.IsSuccessful == true)
                     {
                         LoggedinUsername = uname;
+                        Dataholder.loggedInUserName = uname;
                         afterLogin();
                         continue;
                     }
@@ -66,6 +67,10 @@ namespace CriClient
                     Thread.Sleep(20);
                     continue;
                 }
+                if (PacketService.isChatting)
+                {
+                    PacketService.StartChat(PacketService.chattingWithUser);
+                }
                 Console.WriteLine("1.Search\n2.Chat\n3.Create Group\n4.Search Group\n5.Text Group\n6.Logout");
                 string chooseaction = Console.ReadLine();
                 //chooseaction = chooseaction.ToLower();
@@ -84,9 +89,7 @@ namespace CriClient
                     Response response = PacketService.Chat(user);
                     if (response.IsSuccessful)
                     {
-                        PacketService.canAcceptChatRequest = false;
-                        StartChat(user);
-                        PacketService.canAcceptChatRequest = true;
+                        PacketService.StartChat(user);
                         continue;
                     }
                     else
@@ -127,19 +130,12 @@ namespace CriClient
                     var Response = PacketService.Logout(LoggedinUsername);
                     Console.WriteLine(Response.MessageToUser);
                     LoggedinUsername = "";
+                    Dataholder.loggedInUserName = "";
                     PacketService.StopTcpListen();
                     return;
                 }
             }
             
-        }
-    
-        public static void StartChat(string username)
-        {
-            PacketService.canAcceptChatRequest = false;
-            Console.Clear();
-            Console.WriteLine("---------- Chat with {0} ----------", username);
-            throw new NotImplementedException();
         }
     }
 }
