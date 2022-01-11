@@ -175,6 +175,7 @@ namespace CriClient
                     {
                         Text(Dataholder.loggedInUserName, outgoingStringBuffer.ToString(), destinationIp);
                         outgoingStringBuffer.Clear().Append("> ");
+                        continue;
                     }
                     else if (pressedKey.Key == ConsoleKey.Backspace)
                     {
@@ -184,17 +185,22 @@ namespace CriClient
                     {
                         outgoingStringBuffer.Append(pressedKey.KeyChar);
                     }
+                    int currentLine = Console.CursorTop;
+                    Console.SetCursorPosition(0, currentLine);
+                    Console.Write(new string(' ', Console.WindowWidth));
+                    Console.SetCursorPosition(0, currentLine);
+                    Console.WriteLine(outgoingStringBuffer.ToString());
                 }
-                int currentLine = Console.CursorTop;
-                Console.SetCursorPosition(0, currentLine);
-                Console.Write(new string(' ', Console.WindowWidth));
-                Console.SetCursorPosition(0, currentLine);
                 if (isTextAvailable)
                 {
+                    int currentLine = Console.CursorTop;
+                    Console.SetCursorPosition(0, currentLine);
+                    Console.Write(new string(' ', Console.WindowWidth));
+                    Console.SetCursorPosition(0, currentLine);
                     Console.WriteLine(lastTextMessage);
                     isTextAvailable = false;
+                    Console.WriteLine(outgoingStringBuffer.ToString());
                 }
-                Console.WriteLine(outgoingStringBuffer.ToString());
             }
         }
 
