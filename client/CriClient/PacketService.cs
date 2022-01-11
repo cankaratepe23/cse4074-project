@@ -217,7 +217,7 @@ namespace CriClient
             if (userOption == 'Y')
             {
                 isChatting = true;
-                chattingWithUser = fromIp;
+                chattingWithUser = fromIp.Substring(0, (fromIp.IndexOf(':') == -1 ? fromIp.Length : fromIp.IndexOf(':')));
                 return ProtocolCode.Chat + "\nOK";
             }
             else
