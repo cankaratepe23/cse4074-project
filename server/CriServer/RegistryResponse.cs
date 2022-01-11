@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 
 namespace CriServer
@@ -33,6 +34,16 @@ namespace CriServer
         public override string ToString()
         {
             return Value;
+        }
+        
+        public override bool Equals(Object obj)
+        {
+            if (obj is string)
+                return Value == obj.ToString();
+            if (obj is not RegistryResponse registryResponse)
+                return false;
+
+            return Value == registryResponse.Value;
         }
     }
 }
