@@ -13,6 +13,7 @@ namespace CriClient
 {
     static class PacketService
     {
+        public static bool tcpPacketIncoming = false;
         static Timer HbTimer;
         private static TcpListener tcpListener;
         private static bool isListeningEnabled = false;
@@ -97,7 +98,6 @@ namespace CriClient
         {
             tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
             tcpListener.Start();
-            Console.WriteLine("Start listening with isListeningEnabled: {0}", isListeningEnabled);
             while (isListeningEnabled)
             {
                 if (!tcpListener.Pending())
@@ -109,6 +109,7 @@ namespace CriClient
                     new Thread(() =>
                     {
                         TcpClient client = tcpListener.AcceptTcpClient();
+                        tcpPacketIncoming = true;
                         Console.WriteLine("Accepted TCP client.");
                         NetworkStream incomingStream = client.GetStream();
 
@@ -117,11 +118,12 @@ namespace CriClient
                         string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select(b => b).Where(b => b != 0).ToArray());
 
                         string[] parsedMessage = messageReceived.Split("\n");
-
+                        
                         string response = RespondToChatRequest(client.Client.RemoteEndPoint.ToString());
                         byte[] data = Encoding.UTF8.GetBytes(response);
                         incomingStream.Write(data, 0, data.Length);
                         incomingStream.Close();
+                        tcpPacketIncoming = false;
                     }).Start();
                 }
             }
@@ -135,17 +137,19 @@ namespace CriClient
             {
                 return ProtocolCode.Chat + "\nBUSY";
             }
-            string userOption = "";
-            while (!(userOption == "Y" || userOption == "N"))
+            char userOption = '\0';
+            while (!(userOption == 'Y' || userOption == 'N'))
             {
                 Console.WriteLine("\nIncoming chat request from {0}", fromIp);
                 if (Dataholder.userIPs.ContainsValue(fromIp))
                 {
                     Console.WriteLine("This IP was last seen online as user {0}", Dataholder.userIPs.FirstOrDefault((userIp) => userIp.Value == fromIp).Key);
                 }
-                userOption = Console.ReadLine().ToUpper().Trim();
+                Console.Write("Would you like to accept the request? (Enter, and then Y or N)");
+                userOption = char.ToUpper(Console.ReadKey().KeyChar);
+                Console.WriteLine();
             }
-            if (userOption == "Y")
+            if (userOption == 'Y')
             {
                 return ProtocolCode.Chat + "\nOK";
             }

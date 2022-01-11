@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace CriClient
 {
@@ -60,6 +61,11 @@ namespace CriClient
             PacketService.StartTcpListen();
             while(true)
             {
+                if (PacketService.tcpPacketIncoming)
+                {
+                    Thread.Sleep(20);
+                    continue;
+                }
                 Console.WriteLine("1.Search\n2.Chat\n3.Create Group\n4.Search Group\n5.Text Group\n6.Logout");
                 string chooseaction = Console.ReadLine();
                 //chooseaction = chooseaction.ToLower();
