@@ -39,6 +39,7 @@ namespace CriClient
                     {
                         LoggedinUsername = uname;
                         afterLogin();
+                        continue;
                     }
                     else
                     {
@@ -49,9 +50,8 @@ namespace CriClient
                 }
                 else
                 {
-                    System.Environment.Exit(0);
+                    Environment.Exit(0);
                 }
-
             }
 
         }
@@ -81,7 +81,16 @@ namespace CriClient
                 {
                     Console.WriteLine("Please provide the username you would like to chat ");
                     string user = Console.ReadLine();
-                    PacketService.Chat(user);
+                    Response response = PacketService.Chat(user);
+                    if (response.IsSuccessful)
+                    {
+                        StartChat(user);
+                        continue;
+                    }
+                    else
+                    {
+                        Console.WriteLine(response.MessageToUser);
+                    }
                 }
                 else if (chooseaction == "3")
                 {
@@ -123,9 +132,11 @@ namespace CriClient
             
         }
     
-        public static void StartChat()
+        public static void StartChat(string username)
         {
-
+            Console.Clear();
+            Console.WriteLine("---------- Chat with {0} ----------", username);
+            throw new NotImplementedException();
         }
     }
 }
