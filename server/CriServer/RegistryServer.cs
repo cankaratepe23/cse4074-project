@@ -99,23 +99,6 @@ namespace CriServer
             }
         }
 
-        public void SendPacket(bool isUdp, string ip, string payload, int tcpPort = TCP_PORT, int udpPort = UDP_PORT)
-        {
-            byte[] data = Encoding.UTF8.GetBytes(payload);
-            if (!isUdp)
-            {
-                TcpClient client = new TcpClient(ip, tcpPort);
-                NetworkStream stream = client.GetStream();
-                stream.Write(data, 0, data.Length);
-                stream.Close();
-            }
-            else
-            {
-                UdpClient udpClient = new UdpClient();
-                udpClient.Send(data, data.Length, ip, udpPort);
-            }
-        }
-
         private void UdpListen(ILogger logger)
         {
             Console.WriteLine("Console says: UdpListen() thread started.");
