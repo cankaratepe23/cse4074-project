@@ -329,24 +329,33 @@ namespace CriClient
             {
                 throw new Exception("Username char limit exceeded");
             }
-            string packet = ProtocolCode.Chat.ToString() + "\n" + username;
-            string destIp = Dataholder.userIPs[username];
-            Console.WriteLine("Sending P2P chat request to: {0}", destIp);
-            string answer = SendPacket(false, packet, destination: destIp);
-            string[] tokenizedanswer = answer.Split('\n');
-            if (tokenizedanswer[1] == "BUSY")
+            var searchanswer = Search(username);
+            if (searchanswer.IsSuccessful)
             {
-                return new Response() { IsSuccessful = false, MessageToUser = "This user is currently busy." };
+                string packet = ProtocolCode.Chat.ToString() + "\n" + username;
+                string destIp = Dataholder.userIPs[username];
+                Console.WriteLine("Sending P2P chat request to: {0}", destIp);
+                string answer = SendPacket(false, packet, destination: destIp);
+                string[] tokenizedanswer = answer.Split('\n');
+                if (tokenizedanswer[1] == "BUSY")
+                {
+                    return new Response() { IsSuccessful = false, MessageToUser = "This user is currently busy." };
+                }
+                if (tokenizedanswer[1] == "REJECT")
+                {
+                    return new Response() { IsSuccessful = false, MessageToUser = "The user has rejected your chat request." };
+                }
+                if (tokenizedanswer[1] == "OK")
+                {
+                    return new Response() { IsSuccessful = true, MessageToUser = "" };
+                }
+                return new Response() { IsSuccessful = false, MessageToUser = "Unkown error." };
             }
-            if (tokenizedanswer[1] == "REJECT")
+            else
             {
-                return new Response() { IsSuccessful = false, MessageToUser = "The user has rejected your chat request." };
+                return searchanswer;
             }
-            if (tokenizedanswer[1] == "OK")
-            {
-                return new Response() { IsSuccessful = true, MessageToUser = "" };
-            }
-            return new Response() { IsSuccessful = false, MessageToUser = "Unkown error." };
+            
         }
 
         public static void Text(string username, string message)
