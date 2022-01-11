@@ -170,27 +170,31 @@ namespace CriClient
             {
                 if (Console.KeyAvailable)
                 {
-                    ConsoleKeyInfo pressedKey = Console.ReadKey();
+                    ConsoleKeyInfo pressedKey = Console.ReadKey(true);
                     if (pressedKey.Key == ConsoleKey.Enter)
                     {
                         Text(Dataholder.loggedInUserName, outgoingStringBuffer.ToString(), destinationIp);
-                        outgoingStringBuffer.Clear();
+                        outgoingStringBuffer.Clear().Append("> ");
+                    }
+                    else if (pressedKey.Key == ConsoleKey.Backspace)
+                    {
+                        outgoingStringBuffer.Remove(outgoingStringBuffer.Length - 2, 1);
                     }
                     else
                     {
                         outgoingStringBuffer.Append(pressedKey.KeyChar);
                     }
                 }
+                int currentLine = Console.CursorTop;
+                Console.SetCursorPosition(0, currentLine);
+                Console.Write(new string(' ', Console.WindowWidth));
+                Console.SetCursorPosition(0, currentLine);
                 if (isTextAvailable)
                 {
-                    int currentLine = Console.CursorTop;
-                    Console.SetCursorPosition(0, currentLine);
-                    Console.Write(new string(' ', Console.WindowWidth));
-                    Console.SetCursorPosition(0, currentLine);
                     Console.WriteLine(lastTextMessage);
                     isTextAvailable = false;
-                    Console.WriteLine(outgoingStringBuffer.ToString());
                 }
+                Console.WriteLine(outgoingStringBuffer.ToString());
             }
         }
 
