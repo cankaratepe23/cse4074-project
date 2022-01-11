@@ -288,7 +288,8 @@ namespace CriClient
                 throw new Exception("Username char limit exceeded");
             }
             string packet = ProtocolCode.Chat.ToString() + "\n" + username;
-            SendPacket(false, packet);
+            string answer = SendPacket(false, packet);
+            Console.WriteLine(answer);
         }
 
         public static void Text(string username, string message)
