@@ -59,13 +59,11 @@ namespace CriServer
                         TcpClient client = tcpListener.AcceptTcpClient();
                         NetworkStream incomingStream = client.GetStream();
 
-                        Byte[] incomingBuffer = new Byte[256];
+                        byte[] incomingBuffer = new byte[256];
                         incomingStream.Read(incomingBuffer, 0, incomingBuffer.Length);
 
-                        // Simulate long and blocking operation to test multi-threaded functionality
                         logger.Information("Received TCP connection from {IP} Sleeping...",
                             client.Client.RemoteEndPoint);
-                        //Thread.Sleep(2000);
                         string messageReceived =
                             Encoding.UTF8.GetString(incomingBuffer.Select(b => (byte) b).Where(b => b != 0).ToArray());
                         logger.Information("Received TCP message from {IP}:\n{Message}", client.Client.RemoteEndPoint,
@@ -96,26 +94,8 @@ namespace CriServer
                         logger.Information("Sent TCP respone to {IP}:\n{Message}", client.Client.RemoteEndPoint,
                             registryResponse);
                         incomingStream.Close();
-                        //SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString(), tcpPort: ((IPEndPoint)client.Client.RemoteEndPoint).Port);
                     }).Start();
                 }
-            }
-        }
-
-        public void SendPacket(bool isUdp, string ip, string payload, int tcpPort = TCP_PORT, int udpPort = UDP_PORT)
-        {
-            byte[] data = Encoding.UTF8.GetBytes(payload);
-            if (!isUdp)
-            {
-                TcpClient client = new TcpClient(ip, tcpPort);
-                NetworkStream stream = client.GetStream();
-                stream.Write(data, 0, data.Length);
-                stream.Close();
-            }
-            else
-            {
-                UdpClient udpClient = new UdpClient();
-                udpClient.Send(data, data.Length, ip, udpPort);
             }
         }
 

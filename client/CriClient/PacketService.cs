@@ -28,9 +28,6 @@ namespace CriClient
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
         const string SERVER = "172.29.91.122";
-            //"numellus.tk";
-            //"192.168.1.24";
-            //"127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
 
@@ -80,7 +77,6 @@ namespace CriClient
         private static void HeartBeat(object sender, ElapsedEventArgs e, string username)
         {
             SendPacket(true, ProtocolCode.Hello + "\n" + username);
-            //Console.WriteLine("Heartbeat sent");
         }
 
         public static void StartTcpListen()
@@ -289,7 +285,6 @@ namespace CriClient
             if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Register + "\n" + username + "\n" + password;
-                //string packet = $"00\n{username}\n{password}";
                 string answer = SendPacket(false, packet);
                 string[] tokenizedanswer;
                 int counter = 0;
