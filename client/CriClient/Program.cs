@@ -38,6 +38,7 @@ namespace CriClient
                     if (response.IsSuccessful == true)
                     {
                         LoggedinUsername = uname;
+                        Dataholder.loggedInUserName = uname;
                         afterLogin();
                         continue;
                     }
@@ -85,7 +86,7 @@ namespace CriClient
                     if (response.IsSuccessful)
                     {
                         PacketService.canAcceptChatRequest = false;
-                        StartChat(user);
+                        PacketService.StartChat(user);
                         PacketService.canAcceptChatRequest = true;
                         continue;
                     }
@@ -127,19 +128,12 @@ namespace CriClient
                     var Response = PacketService.Logout(LoggedinUsername);
                     Console.WriteLine(Response.MessageToUser);
                     LoggedinUsername = "";
+                    Dataholder.loggedInUserName = "";
                     PacketService.StopTcpListen();
                     return;
                 }
             }
             
-        }
-    
-        public static void StartChat(string username)
-        {
-            PacketService.canAcceptChatRequest = false;
-            Console.Clear();
-            Console.WriteLine("---------- Chat with {0} ----------", username);
-            throw new NotImplementedException();
         }
     }
 }

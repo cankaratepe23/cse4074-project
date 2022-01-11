@@ -18,6 +18,8 @@ namespace CriClient
         static Timer HbTimer;
         private static TcpListener tcpListener;
         private static bool isListeningEnabled = false;
+        private static bool isTextAvailable = false;
+        private static string lastTextMessage = "";
 
         const int USERNAME_MAX_LENGTH = 16;
         const int PASSWORD_MAX_LENGTH = 16;
@@ -119,10 +121,17 @@ namespace CriClient
                         string messageReceived = Encoding.UTF8.GetString(incomingBuffer.Select(b => b).Where(b => b != 0).ToArray());
 
                         string[] parsedMessage = messageReceived.Split("\n");
-                        
-                        string response = RespondToChatRequest(client.Client.RemoteEndPoint.ToString());
-                        byte[] data = Encoding.UTF8.GetBytes(response);
-                        incomingStream.Write(data, 0, data.Length);
+                        if (ProtocolCode.Text.Equals(parsedMessage[0]))
+                        {
+                            isTextAvailable = true;
+                            lastTextMessage = parsedMessage[2];
+                        }
+                        else if (ProtocolCode.Chat.Equals(parsedMessage[0]))
+                        {
+                            string response = RespondToChatRequest(client.Client.RemoteEndPoint.ToString());
+                            byte[] data = Encoding.UTF8.GetBytes(response);
+                            incomingStream.Write(data, 0, data.Length);
+                        }
                         incomingStream.Close();
                         tcpPacketIncoming = false;
                     }).Start();
@@ -130,6 +139,38 @@ namespace CriClient
             }
             tcpListener.Stop();
             tcpListener = null;
+        }
+
+        public static void StartChat(string username)
+        {
+            StringBuilder outgoingStringBuffer = new StringBuilder();
+            Console.Clear();
+            Console.WriteLine("---------- Chat with {0} ----------", username);
+            while (true)
+            {
+                if (Console.KeyAvailable)
+                {
+                    ConsoleKeyInfo pressedKey = Console.ReadKey();
+                    if (pressedKey.Key == ConsoleKey.Enter)
+                    {
+                        Text(Dataholder.loggedInUserName, outgoingStringBuffer.ToString(), Dataholder.userIPs[username]);
+                        outgoingStringBuffer.Clear();
+                    }
+                    else
+                    {
+                        outgoingStringBuffer.Append(pressedKey.KeyChar);
+                    }
+                }
+                if (isTextAvailable)
+                {
+                    int currentLine = Console.CursorTop;
+                    Console.SetCursorPosition(0, currentLine);
+                    Console.Write(new string(' ', Console.WindowWidth));
+                    Console.SetCursorPosition(0, currentLine);
+                    Console.WriteLine(lastTextMessage);
+                    Console.WriteLine(outgoingStringBuffer.ToString());
+                }
+            }
         }
 
         private static string RespondToChatRequest(string fromIp)
@@ -358,12 +399,12 @@ namespace CriClient
             
         }
 
-        public static void Text(string username, string message)
+        public static void Text(string username, string message, string destinationIp)
         {
             if (username.Length <= USERNAME_MAX_LENGTH && message.Length <= MESSAGE_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Text + "\n" + username + "\n" + message;
-                SendPacket(false, packet);
+                SendPacket(false, packet, destinationIp);
             }
             else
             {
