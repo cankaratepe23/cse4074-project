@@ -218,12 +218,11 @@ namespace CriClient
                     Console.WriteLine(lastTextMessage);
                     Console.Write(outgoingStringBuffer.ToString());
                 }
-
-                Console.Clear();
-                canAcceptChatRequest = true;
-                isChatting = false;
-                isTextAvailable = false;
             }
+            Console.Clear();
+            canAcceptChatRequest = true;
+            isChatting = false;
+            isTextAvailable = false;
         }
 
         private static string RespondToChatRequest(string fromIp)
