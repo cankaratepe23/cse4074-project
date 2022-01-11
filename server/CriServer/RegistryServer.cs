@@ -1,6 +1,7 @@
 ﻿using CriServer.IServices;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -14,28 +15,34 @@ namespace CriServer
     class RegistryServer
     {
         private readonly IUserService _userService;
+        private readonly ConcurrentDictionary<IPAddress, DateTime> _lastHeartBeats;
 
         private TcpListener tcpListener;
         private UdpClient udpListener;
+
         private const int TCP_PORT = 5555;
         private const int UDP_PORT = 5556;
+        private const int ACTIVITY_TIMEOUT = 20;
 
         public RegistryServer(IUserService userService)
         {
             _userService = userService;
+            _lastHeartBeats = new ConcurrentDictionary<IPAddress, DateTime>();
         }
 
         public void Start()
         {
             Thread tcpThread = new Thread(() => TcpListen(Log.Logger));
             Thread udpThread = new Thread(() => UdpListen(Log.Logger));
+            Thread statusUpdaterThread = new Thread(() => UpdateStatusOfUsers(Log.Logger));
             tcpThread.Start();
             udpThread.Start();
+            statusUpdaterThread.Start();
         }
 
         private void TcpListen(ILogger logger)
         {
-            logger.Information("TcpListen() thread started.");
+            logger.Information("TcpListen() thread started");
             tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
             tcpListener.Start();
             while (true)
@@ -50,7 +57,7 @@ namespace CriServer
                     {
                         TcpClient client = tcpListener.AcceptTcpClient();
                         NetworkStream incomingStream = client.GetStream();
-                        
+
                         Byte[] incomingBuffer = new Byte[256];
                         incomingStream.Read(incomingBuffer, 0, incomingBuffer.Length);
 
@@ -81,8 +88,9 @@ namespace CriServer
 
                         byte[] data = Encoding.UTF8.GetBytes(registryResponse.ToString());
                         incomingStream.Write(data, 0, data.Length);
-                        
-                        logger.Information("Sent TCP respone to {IP}:\n{Message}", client.Client.RemoteEndPoint, registryResponse);
+
+                        logger.Information("Sent TCP respone to {IP}:\n{Message}", client.Client.RemoteEndPoint,
+                            registryResponse);
                         incomingStream.Close();
                         //SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString(), tcpPort: ((IPEndPoint)client.Client.RemoteEndPoint).Port);
                     }).Start();
@@ -110,7 +118,7 @@ namespace CriServer
         private void UdpListen(ILogger logger)
         {
             Console.WriteLine("Console says: UdpListen() thread started.");
-            logger.Information("UdpListen() thread started.");
+            logger.Information("UdpListen() thread started");
             udpListener = new UdpClient(UDP_PORT);
             while (true)
             {
@@ -121,6 +129,31 @@ namespace CriServer
                 if (!ProtocolCode.Hello.Equals(tokenizedPayload[0]))
                     break;
                 logger.Information("Received UDP message from {IP}:\n{Message}", remoteEndPoint, tokenizedPayload);
+                _lastHeartBeats[remoteEndPoint.Address] = DateTime.Now;
+            }
+        }
+
+        private void UpdateStatusOfUsers(ILogger logger)
+        {
+            Console.WriteLine("Console says: UpdateStatusOfUsers() thread started.");
+            logger.Information("UpdateStatusOfUsers() thread started");
+            while (true)
+            {
+                List<IPAddress> ipAddressesToRemove = new List<IPAddress>();
+                foreach (KeyValuePair<IPAddress, DateTime> entry in _lastHeartBeats)
+                {
+                    double timeElapsedInSeconds = (DateTime.Now - entry.Value).TotalSeconds;
+
+                    if (timeElapsedInSeconds > ACTIVITY_TIMEOUT)
+                    {
+                        logger.Information("Logging out the user with IP Address:{IP}", entry.Key);
+                        Console.WriteLine("Console says: Logging out the user with IP Address: "+ entry.Key);
+                        _userService.LogoutUser(entry.Key);
+                        ipAddressesToRemove.Add(entry.Key);
+                    }
+                }
+                ipAddressesToRemove.ForEach(address => _lastHeartBeats.Remove(address, out _));
+                Thread.Sleep(1000);
             }
         }
 
@@ -131,7 +164,12 @@ namespace CriServer
 
         private RegistryResponse Login(string[] payload, IPAddress ipAddress)
         {
-            return _userService.LoginUser(payload[0], payload[1], ipAddress);
+            RegistryResponse response = _userService.LoginUser(payload[0], payload[1], ipAddress);
+            
+            if (RegistryResponse.LOGIN_SUCCESSFUL.Equals(response))
+                _lastHeartBeats[ipAddress] = DateTime.Now;
+
+            return response;
         }
 
         private void Logout(IPAddress ipAddress)
