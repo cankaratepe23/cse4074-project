@@ -270,7 +270,14 @@ namespace CriClient
                 }
                 if(tokenizedanswer[1] == "OK")
                 {
-                    Dataholder.userIPs.Add(username, tokenizedanswer[2]);
+                    if (Dataholder.userIPs.ContainsKey(username))
+                    {
+                        Dataholder.userIPs[username] = tokenizedanswer[2];
+                    }
+                    else
+                    {
+                        Dataholder.userIPs.Add(username, tokenizedanswer[2]);
+                    }
                     return new Response { IsSuccessful = true, MessageToUser = "User is online. " };
                 }
                 return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
