@@ -472,7 +472,7 @@ namespace CriClient
                 string packet = ProtocolCode.GroupCreate + "\n" + string.Join("\n", usernames);
                 string answer = SendPacket(false, packet);
                 string[] tokenizedanswer = answer.Split("\n");
-                if(tokenizedanswer[1] == "MEMBERS_NOT_FOUND")
+                if(tokenizedanswer[1] == "NOT_FOUND")
                 {
                     var listAnswer = new List<string>(tokenizedanswer);
                     return new Response { IsSuccessful = false, MessageToUser = "Following users are not found: " + string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2))};
