@@ -142,6 +142,7 @@ namespace CriClient
 
         public static void StartChat(string destination)
         {
+            canAcceptChatRequest = false;
             StringBuilder outgoingStringBuffer = new StringBuilder("> ");
             string destinationIp = "";
             if (Dataholder.userIPs.ContainsKey(destination))
@@ -166,6 +167,7 @@ namespace CriClient
             }
             Console.Clear();
             Console.WriteLine("---------- Chat with {0} ----------", destination);
+            Console.WriteLine("--------- Type :q to exit ---------");
             Console.Write("> ");
             while (true)
             {
@@ -179,6 +181,10 @@ namespace CriClient
                             continue;
                         }
                         Text(Dataholder.loggedInUserName, outgoingStringBuffer.Remove(0, 2).ToString(), destinationIp);
+                        if (outgoingStringBuffer.Remove(0, 2).ToString() == ":q")
+                        {
+                            break;
+                        }
                         outgoingStringBuffer.Clear().Append("> ");
                         Console.Write("\n> ");
                         continue;
@@ -199,6 +205,10 @@ namespace CriClient
                 }
                 if (isTextAvailable)
                 {
+                    if (lastTextMessage == ":q")
+                    {
+                        break;
+                    }
                     int currentLine = Console.CursorTop;
                     Console.SetCursorPosition(0, currentLine);
                     Console.Write(new string(' ', Console.WindowWidth));
