@@ -131,6 +131,12 @@ namespace CriClient
                             byte[] data = Encoding.UTF8.GetBytes(response);
                             incomingStream.Write(data, 0, data.Length);
                         }
+                        else if (ProtocolCode.GroupText.Equals(parsedMessage[0]))
+                        {
+                            Console.WriteLine("Incoming group message from {0}@{1}", parsedMessage[2], parsedMessage[1]);
+                            Console.WriteLine(parsedMessage[3]);
+                            Console.WriteLine();
+                        }
                         incomingStream.Close();
                         tcpPacketIncoming = false;
                     }).Start();
@@ -500,7 +506,26 @@ namespace CriClient
             }
             if(tokenizedanswer[1] == "OK")
             {
-                //Dataholder.userIPs.Add(username, tokenizedanswer[2]);
+                if (!Dataholder.groupMemberIps.ContainsKey(gid))
+                {
+                    Dataholder.groupMemberIps.Add(gid, new Dictionary<string, string>());
+                }
+                Dictionary<string, string> groupMembers = Dataholder.groupMemberIps[gid];
+                for (int i = 2; i < tokenizedanswer.Length; i+=2)
+                {
+                    if (tokenizedanswer[i] == "255.255.255.255")
+                    {
+                        continue;
+                    }
+                    if (!groupMembers.ContainsKey(tokenizedanswer[i+1]))
+                    {
+                        groupMembers.Add(tokenizedanswer[i+1], tokenizedanswer[i]);
+                    }
+                    else
+                    {
+                        groupMembers[tokenizedanswer[i+1]] = tokenizedanswer[i];
+                    }
+                }
                 return new Response { IsSuccessful = true, MessageToUser = string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2)) };
             }
             return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
@@ -508,10 +533,18 @@ namespace CriClient
 
         public static void GroupText(Guid gid, string username, string message)
         {
+            if (!Dataholder.groupMemberIps.ContainsKey(gid))
+            {
+                throw new Exception("Group does not exist.");
+            }
             if (username.Length <= USERNAME_MAX_LENGTH && message.Length <= MESSAGE_MAX_LENGTH)
             {
+                Dictionary<string, string> userIps = Dataholder.groupMemberIps[gid];
                 string packet = ProtocolCode.GroupText + "\n" + gid + "\n" + username + "\n" + message;
-                SendPacket(false, packet);
+                foreach (string ip in userIps.Values)
+                {
+                    SendPacket(false, packet, ip);
+                }
             }
             else
             {

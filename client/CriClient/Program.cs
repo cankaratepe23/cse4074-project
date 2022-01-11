@@ -123,7 +123,7 @@ namespace CriClient
                     Guid GrID = Guid.Parse(Console.ReadLine());
                     Console.WriteLine("Please provide the text you would like to send");
                     string message = Console.ReadLine();
-                    
+                    PacketService.GroupText(GrID, LoggedinUsername, message);
                 }
                 else if (chooseaction == "6")
                 {
