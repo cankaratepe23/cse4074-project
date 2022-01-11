@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CriServer.Dtos;
+using Microsoft.EntityFrameworkCore;
 
 namespace CriServer.Services
 {
@@ -11,45 +13,59 @@ namespace CriServer.Services
         private const int MAX_USER_COUNT = 100;
 
         private readonly CriContext _criContext;
+        private readonly IUserService _userService;
 
         public GroupService(IServiceProvider services)
         {
             _criContext = services.GetService<CriContext>();
+            _userService = services.GetService<IUserService>();
         }
 
-        public Group CreateGroup(List<User> users)
+        public RegistryResponse CreateGroup(List<string> usernames)
         {
-            if (users.Count > MAX_USER_COUNT)
-            {
-                throw new ArgumentException("Groups can't have more than 100 users.");
-            }
+            if (usernames.Count > MAX_USER_COUNT)
+                return RegistryResponse.GROUP_CREATE_FAIL;
+
             Group newGroup = new Group();
-            foreach (User user in users)
+            List<string> usersNotFound = new List<string>();
+            foreach (string username in usernames)
             {
-                newGroup.Users.Add(user);
+                User user = _userService.GetUserByUsername(username);
+
+                if (user == null)
+                    usersNotFound.Add(username);
+                else
+                    newGroup.Users.Add(user);
             }
-            _criContext.Add<Group>(newGroup);
+
+            if (usersNotFound.Count != 0)
+                return RegistryResponse.GROUP_CREATE_USER_NOT_FOUND(usersNotFound);
+
+            _criContext.Add(newGroup);
             _criContext.SaveChanges();
-            return newGroup;
+
+            return RegistryResponse.GROUP_CREATE_SUCCESSFUL;
         }
 
-        public void AddToGroupByGuid(Guid groupId, List<User> users)
+        public RegistryResponse SearchGroup(Guid groupId)
         {
-            if (users.Count > MAX_USER_COUNT)
+            Group group = GetGroupByGroupId(groupId);
+
+            if (group == null)
+                return RegistryResponse.GROUP_SEARCH_NOT_FOUND;
+
+            return RegistryResponse.GROUP_SEARCH_SUCCESSFUL(group.Users.Select(user => new UserIpDto()
             {
-                throw new ArgumentException("Groups can't have more than 100 users.");
-            }
-            Group groupToAddTo = GetGroupByGroupId(groupId);
-            foreach (User user in users)
-            {
-                groupToAddTo.Users.Add(user);
-            }
-            _criContext.SaveChanges();
+                Username = user.Username,
+                IpAddress = user.IpAddress
+            }).ToList());
         }
 
-        public Group GetGroupByGroupId(Guid groupId)
+        private Group GetGroupByGroupId(Guid groupId)
         {
-            return _criContext.Groups.Where(g => g.GroupId == groupId).FirstOrDefault();
+            return _criContext.Groups
+                .Include(g => g.Users)
+                .FirstOrDefault(g => g.GroupId == groupId);
         }
     }
 }
