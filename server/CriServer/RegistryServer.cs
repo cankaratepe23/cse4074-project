@@ -7,22 +7,23 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace CriServer
 {
     class RegistryServer
     {
         private readonly IUserService _userService;
+        private readonly IGroupService _groupService;
 
         private TcpListener tcpListener;
         private UdpClient udpListener;
         private const int TCP_PORT = 5555;
         private const int UDP_PORT = 5556;
 
-        public RegistryServer(IUserService userService)
+        public RegistryServer(IUserService userService, IGroupService groupService)
         {
             _userService = userService;
+            _groupService = groupService;
         }
 
         public void Start()
@@ -50,7 +51,7 @@ namespace CriServer
                     {
                         TcpClient client = tcpListener.AcceptTcpClient();
                         NetworkStream incomingStream = client.GetStream();
-                        
+
                         Byte[] incomingBuffer = new Byte[256];
                         incomingStream.Read(incomingBuffer, 0, incomingBuffer.Length);
 
@@ -78,11 +79,16 @@ namespace CriServer
                             Logout(ipAddress);
                         else if (ProtocolCode.Search.Equals(method))
                             registryResponse = Search(payload);
+                        else if (ProtocolCode.GroupCreate.Equals(method))
+                            registryResponse = GroupCreate(payload);
+                        else if (ProtocolCode.GroupSearch.Equals(method))
+                            registryResponse = GroupSearch(payload);
 
                         byte[] data = Encoding.UTF8.GetBytes(registryResponse.ToString());
                         incomingStream.Write(data, 0, data.Length);
-                        
-                        logger.Information("Sent TCP respone to {IP}:\n{Message}", client.Client.RemoteEndPoint, registryResponse);
+
+                        logger.Information("Sent TCP respone to {IP}:\n{Message}", client.Client.RemoteEndPoint,
+                            registryResponse);
                         incomingStream.Close();
                         //SendPacket(false, ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString(), registryResponse.ToString(), tcpPort: ((IPEndPoint)client.Client.RemoteEndPoint).Port);
                     }).Start();
@@ -142,6 +148,16 @@ namespace CriServer
         private RegistryResponse Search(string[] payload)
         {
             return _userService.Search(payload[0]);
+        }
+
+        private RegistryResponse GroupCreate(string[] payload)
+        {
+            return _groupService.CreateGroup(new List<string>(payload));
+        }
+
+        private RegistryResponse GroupSearch(string[] payload)
+        {
+            return _groupService.SearchGroup(new Guid(payload[0]));
         }
 
         public void Stop()
