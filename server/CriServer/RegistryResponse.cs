@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
+using CriServer.Dtos;
 
 namespace CriServer
 {
@@ -28,8 +30,15 @@ namespace CriServer
             new(ProtocolCode.Search + "\nOK\n" + ipAddress);
 
         public static RegistryResponse SEARCH_USER_OFFLINE => new(ProtocolCode.Search + "\nOFFLINE");
-
         public static RegistryResponse SEARCH_USER_NOT_FOUND => new(ProtocolCode.Search + "\nNOT_FOUND");
+
+        public static RegistryResponse GROUP_CREATE_SUCCESSFUL => new(ProtocolCode.GroupCreate + "\nOK");
+        public static RegistryResponse GROUP_CREATE_USER_NOT_FOUND(List<string> usernames) =>
+            new(ProtocolCode.GroupCreate + "\nNOT_FOUND\n" + string.Join("\n", usernames));
+        public static RegistryResponse GROUP_CREATE_FAIL => new(ProtocolCode.GroupCreate + "\nFAIL");
+
+        public static RegistryResponse GROUP_SEARCH_SUCCESSFUL(List<UserIpDto> userIpDtos) => new(ProtocolCode.GroupSearch + "\nNOT_FOUND"+ string.Join("\n", userIpDtos));
+        public static RegistryResponse GROUP_SEARCH_NOT_FOUND => new(ProtocolCode.GroupSearch + "\nNOT_FOUND");
 
         public override string ToString()
         {

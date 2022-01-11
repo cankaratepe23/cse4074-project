@@ -80,7 +80,7 @@ namespace CriServer.Services
             return RegistryResponse.SEARCH_USER_ONLINE(user.IpAddress);
         }
 
-        private User GetUserByUsername(string username)
+        public User GetUserByUsername(string username)
         {
             return _criContext.Users.FirstOrDefault(u => u.Username == username);
         }

@@ -24,24 +24,28 @@ namespace CriServer
             {
                 connectionStringOption = "PostgresStandalone";
             }
+
             IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((_, services) =>
-                services
-                    .AddDbContext<CriContext>(options =>
-                        options.UseNpgsql(configuration.GetConnectionString(connectionStringOption)))
-                    .AddScoped<IUserService, UserService>()
-                    .AddScoped<IGroupService, GroupService>()
+                    services
+                        .AddDbContext<CriContext>(options =>
+                            options.UseNpgsql(configuration.GetConnectionString(connectionStringOption)))
+                        .AddScoped<IUserService, UserService>()
+                        .AddScoped<IGroupService, GroupService>()
                 ).Build();
             CriContext dbContext = host.Services.GetService<CriContext>();
             dbContext?.Database.EnsureCreated();
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
-                .WriteTo.File("/var/log/criserver/criserver.log", rollingInterval: RollingInterval.Day, flushToDiskInterval: TimeSpan.FromSeconds(1))
+                .WriteTo.File("/var/log/criserver/criserver.log", rollingInterval: RollingInterval.Day,
+                    flushToDiskInterval: TimeSpan.FromSeconds(1))
                 .CreateLogger();
             Log.Logger.Information("Starting registry server listeners."); // Do not delete!
             // This is important for logging to work in background threads. I don't know why but removing the line above breaks logging.
-            RegistryServer registryServer = new RegistryServer(host.Services.GetService<IUserService>());
+            
+            RegistryServer registryServer = new RegistryServer(host.Services.GetService<IUserService>(),
+                host.Services.GetService<IGroupService>());
             registryServer.Start();
 
             Log.CloseAndFlush();
