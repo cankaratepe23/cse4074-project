@@ -22,7 +22,6 @@ namespace CriServer
         public static RegistryResponse LOGIN_FAIL => new(ProtocolCode.Login + "\nFAIL");
         
         public static RegistryResponse LOGOUT_SUCCESSFUL => new(ProtocolCode.Logout + "\nOK");
-        public static RegistryResponse LOGOUT_FAIL => new(ProtocolCode.Logout + "\nFAIL");
 
         public static RegistryResponse SEARCH_USER_ONLINE(IPAddress ipAddress) =>
             new(ProtocolCode.Search + "\nOK\n" + ipAddress);

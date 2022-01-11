@@ -44,7 +44,7 @@ namespace CriServer.Services
 
             if (user == null)
                 return RegistryResponse.LOGIN_FAIL;
-            
+
             if (password != user.Password)
                 return RegistryResponse.LOGIN_FAIL;
 
@@ -58,12 +58,12 @@ namespace CriServer.Services
         {
             var user = GetUserByIPAddress(ipAddress);
 
-            if (user == null)
-                return RegistryResponse.LOGOUT_FAIL;
+            if (user != null)
+            {
+                user.IpAddress = IPAddress.None;
+                _criContext.SaveChanges();
+            }
 
-            user.IpAddress = IPAddress.None;
-            _criContext.SaveChanges();
-            
             return RegistryResponse.LOGOUT_SUCCESSFUL;
         }
 
@@ -73,10 +73,10 @@ namespace CriServer.Services
 
             if (user == null)
                 return RegistryResponse.SEARCH_USER_NOT_FOUND;
-            
+
             if (user.IpAddress.Equals(IPAddress.None))
                 return RegistryResponse.SEARCH_USER_OFFLINE;
-            
+
             return RegistryResponse.SEARCH_USER_ONLINE(user.IpAddress);
         }
 
