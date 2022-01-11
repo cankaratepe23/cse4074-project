@@ -16,6 +16,7 @@ namespace CriClient
         static Timer HbTimer;
         private static TcpListener tcpListener;
         private static bool isListeningEnabled = false;
+        private static bool canAcceptChatRequest = false;
 
         const int USERNAME_MAX_LENGTH = 16;
         const int PASSWORD_MAX_LENGTH = 16;
@@ -82,7 +83,9 @@ namespace CriClient
         public static void StartTcpListen()
         {
             isListeningEnabled = true;
+            canAcceptChatRequest = true;
             Thread tcpListenThread = new Thread(() => TcpListen());
+            tcpListenThread.Start();
         }
 
         public static void StopTcpListen()
@@ -94,6 +97,7 @@ namespace CriClient
         {
             tcpListener = new TcpListener(IPAddress.Any, TCP_PORT);
             tcpListener.Start();
+            Console.WriteLine("Start listening with isListeningEnabled: {0}", isListeningEnabled);
             while (isListeningEnabled)
             {
                 if (!tcpListener.Pending())
@@ -105,6 +109,7 @@ namespace CriClient
                     new Thread(() =>
                     {
                         TcpClient client = tcpListener.AcceptTcpClient();
+                        Console.WriteLine("Accepted TCP client.");
                         NetworkStream incomingStream = client.GetStream();
 
                         byte[] incomingBuffer = new byte[256];
@@ -113,7 +118,7 @@ namespace CriClient
 
                         string[] parsedMessage = messageReceived.Split("\n");
 
-                        string response = "";
+                        string response = RespondToChatRequest(client.Client.RemoteEndPoint.ToString());
                         byte[] data = Encoding.UTF8.GetBytes(response);
                         incomingStream.Write(data, 0, data.Length);
                         incomingStream.Close();
@@ -124,6 +129,32 @@ namespace CriClient
             tcpListener = null;
         }
 
+        private static string RespondToChatRequest(string fromIp)
+        { // TODO decouple this as this should be a UI method
+            if (!canAcceptChatRequest)
+            {
+                return ProtocolCode.Chat + "\nBUSY";
+            }
+            string userOption = "";
+            while (!(userOption == "Y" || userOption == "N"))
+            {
+                Console.WriteLine("\nIncoming chat request from {0}", fromIp);
+                ;
+                if (Dataholder.userIPs.ContainsValue(fromIp))
+                {
+                    Console.WriteLine("This IP was last seen online as user {0}", Dataholder.userIPs.FirstOrDefault((userIp) => userIp.Value == fromIp).Key);
+                }
+                userOption = Console.ReadLine().ToUpper().Trim();
+            }
+            if (userOption == "Y")
+            {
+                return ProtocolCode.Chat + "\nOK";
+            }
+            else
+            {
+                return ProtocolCode.Chat + "\nREJECT";
+            }
+        }
 
         public static string ReceivePacket()
         {
