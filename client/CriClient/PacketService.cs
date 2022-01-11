@@ -142,7 +142,7 @@ namespace CriClient
 
         public static void StartChat(string destination)
         {
-            StringBuilder outgoingStringBuffer = new StringBuilder();
+            StringBuilder outgoingStringBuffer = new StringBuilder("> ");
             string destinationIp = "";
             if (Dataholder.userIPs.ContainsKey(destination))
             {
@@ -166,6 +166,7 @@ namespace CriClient
             }
             Console.Clear();
             Console.WriteLine("---------- Chat with {0} ----------", destination);
+            Console.Write("> ");
             while (true)
             {
                 if (Console.KeyAvailable)
@@ -173,13 +174,18 @@ namespace CriClient
                     ConsoleKeyInfo pressedKey = Console.ReadKey(true);
                     if (pressedKey.Key == ConsoleKey.Enter)
                     {
-                        Text(Dataholder.loggedInUserName, outgoingStringBuffer.ToString(), destinationIp);
+                        if (outgoingStringBuffer.Length <= 2)
+                        {
+                            continue;
+                        }
+                        Text(Dataholder.loggedInUserName, outgoingStringBuffer.Remove(0, 2).ToString(), destinationIp);
                         outgoingStringBuffer.Clear().Append("> ");
+                        Console.Write("\n> ");
                         continue;
                     }
                     else if (pressedKey.Key == ConsoleKey.Backspace)
                     {
-                        outgoingStringBuffer.Remove(outgoingStringBuffer.Length - 2, 1);
+                        outgoingStringBuffer.Remove(outgoingStringBuffer.Length - 1, 1);
                     }
                     else
                     {
@@ -189,7 +195,7 @@ namespace CriClient
                     Console.SetCursorPosition(0, currentLine);
                     Console.Write(new string(' ', Console.WindowWidth));
                     Console.SetCursorPosition(0, currentLine);
-                    Console.WriteLine(outgoingStringBuffer.ToString());
+                    Console.Write(outgoingStringBuffer.ToString());
                 }
                 if (isTextAvailable)
                 {
@@ -199,7 +205,7 @@ namespace CriClient
                     Console.SetCursorPosition(0, currentLine);
                     Console.WriteLine(lastTextMessage);
                     isTextAvailable = false;
-                    Console.WriteLine(outgoingStringBuffer.ToString());
+                    Console.Write(outgoingStringBuffer.ToString());
                 }
             }
         }
