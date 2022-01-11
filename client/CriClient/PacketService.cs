@@ -181,7 +181,7 @@ namespace CriClient
                             continue;
                         }
                         Text(Dataholder.loggedInUserName, outgoingStringBuffer.Remove(0, 2).ToString(), destinationIp);
-                        if (outgoingStringBuffer.Remove(0, 2).ToString() == ":q")
+                        if (outgoingStringBuffer.ToString() == ":q")
                         {
                             break;
                         }
@@ -205,6 +205,7 @@ namespace CriClient
                 }
                 if (isTextAvailable)
                 {
+                    isTextAvailable = false;
                     if (lastTextMessage == ":q")
                     {
                         break;
@@ -214,9 +215,13 @@ namespace CriClient
                     Console.Write(new string(' ', Console.WindowWidth));
                     Console.SetCursorPosition(0, currentLine);
                     Console.WriteLine(lastTextMessage);
-                    isTextAvailable = false;
                     Console.Write(outgoingStringBuffer.ToString());
                 }
+
+                Console.Clear();
+                canAcceptChatRequest = true;
+                isChatting = false;
+                isTextAvailable = false;
             }
         }
 
