@@ -18,7 +18,6 @@ namespace CriServer
         public static ProtocolCode Search => new("04");
         public static ProtocolCode GroupCreate => new("07");
         public static ProtocolCode GroupSearch => new("08");
-        public static ProtocolCode GroupText => new("09");
 
         public override string ToString()
         {
