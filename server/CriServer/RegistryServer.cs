@@ -75,14 +75,13 @@ namespace CriServer
                         string[] payload = parsedMessage.Skip(1).ToArray();
                         IPAddress ipAddress = ((IPEndPoint) client.Client.RemoteEndPoint)?.Address;
 
-                        RegistryResponse
-                            registryResponse = RegistryResponse.LOGIN_SUCCESSFUL; // to be changed, handle logout
+                        RegistryResponse registryResponse = null;
                         if (ProtocolCode.Register.Equals(method))
                             registryResponse = Register(payload);
                         else if (ProtocolCode.Login.Equals(method))
                             registryResponse = Login(payload, ipAddress);
                         else if (ProtocolCode.Logout.Equals(method))
-                            Logout(ipAddress);
+                            registryResponse = Logout(ipAddress);
                         else if (ProtocolCode.Search.Equals(method))
                             registryResponse = Search(payload);
 
@@ -147,11 +146,14 @@ namespace CriServer
                     if (timeElapsedInSeconds > ACTIVITY_TIMEOUT)
                     {
                         logger.Information("Logging out the user with IP Address:{IP}", entry.Key);
-                        Console.WriteLine("Console says: Logging out the user with IP Address: "+ entry.Key);
-                        _userService.LogoutUser(entry.Key);
-                        ipAddressesToRemove.Add(entry.Key);
+                        Console.WriteLine("Console says: Logging out the user with IP Address: " + entry.Key);
+
+                        RegistryResponse response = _userService.LogoutUser(entry.Key);
+                        if (RegistryResponse.LOGOUT_SUCCESSFUL.Equals(response))
+                            ipAddressesToRemove.Add(entry.Key);
                     }
                 }
+
                 ipAddressesToRemove.ForEach(address => _lastHeartBeats.Remove(address, out _));
                 Thread.Sleep(1000);
             }
@@ -165,16 +167,21 @@ namespace CriServer
         private RegistryResponse Login(string[] payload, IPAddress ipAddress)
         {
             RegistryResponse response = _userService.LoginUser(payload[0], payload[1], ipAddress);
-            
+
             if (RegistryResponse.LOGIN_SUCCESSFUL.Equals(response))
                 _lastHeartBeats[ipAddress] = DateTime.Now;
 
             return response;
         }
 
-        private void Logout(IPAddress ipAddress)
+        private RegistryResponse Logout(IPAddress ipAddress)
         {
-            _userService.LogoutUser(ipAddress);
+            RegistryResponse response = _userService.LogoutUser(ipAddress);
+
+            if (RegistryResponse.LOGOUT_SUCCESSFUL.Equals(response))
+                _lastHeartBeats.Remove(ipAddress, out _);
+
+            return response;
         }
 
         private RegistryResponse Search(string[] payload)
