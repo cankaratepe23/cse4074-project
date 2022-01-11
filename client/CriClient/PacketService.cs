@@ -44,7 +44,6 @@ namespace CriClient
                 NetworkStream stream = client.GetStream();
                 stream.Write(data, 0, data.Length);
 
-                Console.WriteLine("Sent");
                 List<byte> bytes = new List<byte>();
                 int i;
                 while ((i = stream.ReadByte()) != -1)
@@ -53,7 +52,6 @@ namespace CriClient
                 }
 
                 string dataRead = System.Text.Encoding.UTF8.GetString(bytes.ToArray());
-                Console.WriteLine("Received: {0}", dataRead);
                 stream.Close();
                 return dataRead;
             }
@@ -115,7 +113,6 @@ namespace CriClient
                     {
                         TcpClient client = tcpListener.AcceptTcpClient();
                         tcpPacketIncoming = true;
-                        Console.WriteLine("Accepted TCP client.");
                         NetworkStream incomingStream = client.GetStream();
 
                         byte[] incomingBuffer = new byte[256];
@@ -191,6 +188,7 @@ namespace CriClient
                     Console.Write(new string(' ', Console.WindowWidth));
                     Console.SetCursorPosition(0, currentLine);
                     Console.WriteLine(lastTextMessage);
+                    isTextAvailable = false;
                     Console.WriteLine(outgoingStringBuffer.ToString());
                 }
             }
@@ -242,7 +240,6 @@ namespace CriClient
             }
 
             data = Encoding.UTF8.GetString(bytes.ToArray());
-            Console.WriteLine("Received: {0}", data);
             client.Close();
             server.Stop();
             return data;
