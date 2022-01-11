@@ -67,6 +67,10 @@ namespace CriClient
                     Thread.Sleep(20);
                     continue;
                 }
+                if (PacketService.isChatting)
+                {
+                    PacketService.StartChat(PacketService.chattingWithUser);
+                }
                 Console.WriteLine("1.Search\n2.Chat\n3.Create Group\n4.Search Group\n5.Text Group\n6.Logout");
                 string chooseaction = Console.ReadLine();
                 //chooseaction = chooseaction.ToLower();

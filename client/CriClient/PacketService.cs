@@ -14,6 +14,8 @@ namespace CriClient
     static class PacketService
     {
         public static bool tcpPacketIncoming = false;
+        public static bool isChatting = false;
+        public static string chattingWithUser = "";
         public static bool canAcceptChatRequest = false;
         static Timer HbTimer;
         private static TcpListener tcpListener;
@@ -141,11 +143,32 @@ namespace CriClient
             tcpListener = null;
         }
 
-        public static void StartChat(string username)
+        public static void StartChat(string destination)
         {
             StringBuilder outgoingStringBuffer = new StringBuilder();
+            string destinationIp = "";
+            if (Dataholder.userIPs.ContainsKey(destination))
+            {
+                destinationIp = Dataholder.userIPs[destination];
+            }
+            else if (IPAddress.TryParse(destination, out var _))
+            {
+                destinationIp = destination;
+            }
+            else
+            {
+                var response = Search(destination);
+                if (response.IsSuccessful)
+                {
+                    destination = Dataholder.userIPs[destination];
+                }
+                else
+                {
+                    throw new Exception(response.MessageToUser);
+                }
+            }
             Console.Clear();
-            Console.WriteLine("---------- Chat with {0} ----------", username);
+            Console.WriteLine("---------- Chat with {0} ----------", destination);
             while (true)
             {
                 if (Console.KeyAvailable)
@@ -153,7 +176,7 @@ namespace CriClient
                     ConsoleKeyInfo pressedKey = Console.ReadKey();
                     if (pressedKey.Key == ConsoleKey.Enter)
                     {
-                        Text(Dataholder.loggedInUserName, outgoingStringBuffer.ToString(), Dataholder.userIPs[username]);
+                        Text(Dataholder.loggedInUserName, outgoingStringBuffer.ToString(), destinationIp);
                         outgoingStringBuffer.Clear();
                     }
                     else
@@ -193,6 +216,8 @@ namespace CriClient
             }
             if (userOption == 'Y')
             {
+                isChatting = true;
+                chattingWithUser = fromIp;
                 return ProtocolCode.Chat + "\nOK";
             }
             else
