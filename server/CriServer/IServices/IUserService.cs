@@ -8,5 +8,6 @@ namespace CriServer.IServices
         RegistryResponse LoginUser(string username, string password, IPAddress ipAddress);
         void LogoutUser(IPAddress ipAddress);
         RegistryResponse Search(string username);
+        User GetUserByUsername(string username);
     }
 }
