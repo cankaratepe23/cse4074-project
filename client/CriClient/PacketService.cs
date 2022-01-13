@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -28,9 +27,6 @@ namespace CriClient
         const int TCP_PORT = 5555;
         const int UDP_PORT = 5556;
         const string SERVER = "172.29.91.122";
-            //"numellus.tk";
-            //"192.168.1.24";
-            //"127.0.0.1";
         const int MESSAGE_MAX_LENGTH = 325;
         const int MAX_USER_COUNT = 100;
 
@@ -48,7 +44,7 @@ namespace CriClient
                 int i;
                 while ((i = stream.ReadByte()) != -1)
                 {
-                    bytes.Add((byte) i);
+                    bytes.Add((byte)i);
                 }
 
                 string dataRead = System.Text.Encoding.UTF8.GetString(bytes.ToArray());
@@ -80,7 +76,6 @@ namespace CriClient
         private static void HeartBeat(object sender, ElapsedEventArgs e, string username)
         {
             SendPacket(true, ProtocolCode.Hello + "\n" + username);
-            //Console.WriteLine("Heartbeat sent");
         }
 
         public static void StartTcpListen()
@@ -131,6 +126,12 @@ namespace CriClient
                             byte[] data = Encoding.UTF8.GetBytes(response);
                             incomingStream.Write(data, 0, data.Length);
                         }
+                        else if (ProtocolCode.GroupText.Equals(parsedMessage[0]))
+                        {
+                            Console.WriteLine("Incoming group message from {0}@{1}", parsedMessage[2], parsedMessage[1]);
+                            Console.WriteLine(parsedMessage[3]);
+                            Console.WriteLine();
+                        }
                         incomingStream.Close();
                         tcpPacketIncoming = false;
                     }).Start();
@@ -149,13 +150,13 @@ namespace CriClient
             {
                 destinationIp = Dataholder.userIPs[destination];
             }
-            else if (IPAddress.TryParse(destination, out var _))
+            else if (IPAddress.TryParse(destination, out IPAddress _))
             {
                 destinationIp = destination;
             }
             else
             {
-                var response = Search(destination);
+                Response response = Search(destination);
                 if (response.IsSuccessful)
                 {
                     destination = Dataholder.userIPs[destination];
@@ -217,12 +218,11 @@ namespace CriClient
                     Console.WriteLine(lastTextMessage);
                     Console.Write(outgoingStringBuffer.ToString());
                 }
-
-                Console.Clear();
-                canAcceptChatRequest = true;
-                isChatting = false;
-                isTextAvailable = false;
             }
+            Console.Clear();
+            canAcceptChatRequest = true;
+            isChatting = false;
+            isTextAvailable = false;
         }
 
         private static string RespondToChatRequest(string fromIp)
@@ -267,7 +267,7 @@ namespace CriClient
             int i;
             while ((i = stream.ReadByte()) != -1)
             {
-                bytes.Add((byte) i);
+                bytes.Add((byte)i);
             }
 
             data = Encoding.UTF8.GetString(bytes.ToArray());
@@ -283,7 +283,6 @@ namespace CriClient
             if (username.Length <= USERNAME_MAX_LENGTH && password.Length <= PASSWORD_MAX_LENGTH)
             {
                 string packet = ProtocolCode.Register + "\n" + username + "\n" + password;
-                //string packet = $"00\n{username}\n{password}";
                 string answer = SendPacket(false, packet);
                 string[] tokenizedanswer;
                 int counter = 0;
@@ -295,15 +294,15 @@ namespace CriClient
 
                 if (tokenizedanswer[1] == "ALREADY_EXISTS")
                 {
-                    return new Response() {IsSuccessful = false, MessageToUser = "This user already exists."};
+                    return new Response() { IsSuccessful = false, MessageToUser = "This user already exists." };
                 }
 
                 if (tokenizedanswer[1] == "OK")
                 {
-                    return new Response() {IsSuccessful = true, MessageToUser = "Registered Successfully"};
+                    return new Response() { IsSuccessful = true, MessageToUser = "Registered Successfully" };
                 }
 
-                return new Response() {IsSuccessful = false, MessageToUser = "Unknown Error"};
+                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
             }
             else
             {
@@ -335,10 +334,10 @@ namespace CriClient
 
                 if (tokenizedanswer[1] == "FAIL")
                 {
-                    return new Response {IsSuccessful = false, MessageToUser = "Cannot login. "};
+                    return new Response { IsSuccessful = false, MessageToUser = "Cannot login. " };
                 }
 
-                return new Response() {IsSuccessful = false, MessageToUser = "Unknown Error"};
+                return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
             }
             else
             {
@@ -352,7 +351,7 @@ namespace CriClient
             string answer = SendPacket(false, packet);
             string[] tokenizedanswer;
             tokenizedanswer = answer.Split("\n");
-            if(tokenizedanswer[1] == "OK")
+            if (tokenizedanswer[1] == "OK")
             {
                 KillHeartbeat();
                 return new Response { IsSuccessful = true, MessageToUser = "Logged out. " };
@@ -390,14 +389,14 @@ namespace CriClient
 
                 if (tokenizedanswer[1] == "OFFLINE")
                 {
-                    return new Response {IsSuccessful = false, MessageToUser = "User is offline. "};
+                    return new Response { IsSuccessful = false, MessageToUser = "User is offline. " };
                 }
 
                 if (tokenizedanswer[1] == "NOT_FOUND")
                 {
-                    return new Response {IsSuccessful = false, MessageToUser = "User not found. "};
+                    return new Response { IsSuccessful = false, MessageToUser = "User not found. " };
                 }
-                if(tokenizedanswer[1] == "OK")
+                if (tokenizedanswer[1] == "OK")
                 {
                     if (Dataholder.userIPs.ContainsKey(username))
                     {
@@ -423,7 +422,7 @@ namespace CriClient
             {
                 throw new Exception("Username char limit exceeded");
             }
-            var searchanswer = Search(username);
+            Response searchanswer = Search(username);
             if (searchanswer.IsSuccessful)
             {
                 string packet = ProtocolCode.Chat.ToString() + "\n" + username;
@@ -449,7 +448,7 @@ namespace CriClient
             {
                 return searchanswer;
             }
-            
+
         }
 
         public static void Text(string username, string message, string destinationIp)
@@ -472,12 +471,12 @@ namespace CriClient
                 string packet = ProtocolCode.GroupCreate + "\n" + string.Join("\n", usernames);
                 string answer = SendPacket(false, packet);
                 string[] tokenizedanswer = answer.Split("\n");
-                if(tokenizedanswer[1] == "NOT_FOUND")
+                if (tokenizedanswer[1] == "NOT_FOUND")
                 {
-                    var listAnswer = new List<string>(tokenizedanswer);
-                    return new Response { IsSuccessful = false, MessageToUser = "Following users are not found: " + string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2))};
+                    List<string> listAnswer = new List<string>(tokenizedanswer);
+                    return new Response { IsSuccessful = false, MessageToUser = "Following users are not found: " + string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2)) };
                 }
-                if(tokenizedanswer[1] == "OK")
+                if (tokenizedanswer[1] == "OK")
                 {
                     return new Response { IsSuccessful = true, MessageToUser = "Group successfully created. " };
                 }
@@ -494,13 +493,32 @@ namespace CriClient
             string packet = ProtocolCode.GroupSearch + "\n" + gid;
             string answer = SendPacket(false, packet);
             string[] tokenizedanswer = answer.Split("\n");
-            if(tokenizedanswer[1] == "NOT_FOUND")
+            if (tokenizedanswer[1] == "NOT_FOUND")
             {
                 return new Response { IsSuccessful = false, MessageToUser = "Group with the given ID doesn't exist." };
             }
-            if(tokenizedanswer[1] == "OK")
+            if (tokenizedanswer[1] == "OK")
             {
-                //Dataholder.userIPs.Add(username, tokenizedanswer[2]);
+                if (!Dataholder.groupMemberIps.ContainsKey(gid))
+                {
+                    Dataholder.groupMemberIps.Add(gid, new Dictionary<string, string>());
+                }
+                Dictionary<string, string> groupMembers = Dataholder.groupMemberIps[gid];
+                for (int i = 2; i < tokenizedanswer.Length; i += 2)
+                {
+                    if (tokenizedanswer[i] == "255.255.255.255")
+                    {
+                        continue;
+                    }
+                    if (!groupMembers.ContainsKey(tokenizedanswer[i + 1]))
+                    {
+                        groupMembers.Add(tokenizedanswer[i + 1], tokenizedanswer[i]);
+                    }
+                    else
+                    {
+                        groupMembers[tokenizedanswer[i + 1]] = tokenizedanswer[i];
+                    }
+                }
                 return new Response { IsSuccessful = true, MessageToUser = string.Join("\n", tokenizedanswer.TakeLast(tokenizedanswer.Length - 2)) };
             }
             return new Response() { IsSuccessful = false, MessageToUser = "Unknown Error" };
@@ -508,10 +526,18 @@ namespace CriClient
 
         public static void GroupText(Guid gid, string username, string message)
         {
+            if (!Dataholder.groupMemberIps.ContainsKey(gid))
+            {
+                throw new Exception("Group does not exist.");
+            }
             if (username.Length <= USERNAME_MAX_LENGTH && message.Length <= MESSAGE_MAX_LENGTH)
             {
+                Dictionary<string, string> userIps = Dataholder.groupMemberIps[gid];
                 string packet = ProtocolCode.GroupText + "\n" + gid + "\n" + username + "\n" + message;
-                SendPacket(false, packet);
+                foreach (string ip in userIps.Values)
+                {
+                    SendPacket(false, packet, ip);
+                }
             }
             else
             {

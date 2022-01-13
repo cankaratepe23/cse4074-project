@@ -1,5 +1,4 @@
-﻿using CriServer;
-using CriServer.IServices;
+﻿using CriServer.IServices;
 using CriServer.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -7,8 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
-using System.Net.Sockets;
-using System.Text;
 
 namespace CriServer
 {
@@ -42,8 +39,8 @@ namespace CriServer
                     flushToDiskInterval: TimeSpan.FromSeconds(1))
                 .CreateLogger();
             Log.Logger.Information("Starting registry server listeners."); // Do not delete!
-            // This is important for logging to work in background threads. I don't know why but removing the line above breaks logging.
-            
+                                                                           // This is important for logging to work in background threads. I don't know why but removing the line above breaks logging.
+
             RegistryServer registryServer = new RegistryServer(host.Services.GetService<IUserService>(),
                 host.Services.GetService<IGroupService>());
             registryServer.Start();

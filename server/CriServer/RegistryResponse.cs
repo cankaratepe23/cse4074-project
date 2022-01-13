@@ -1,10 +1,10 @@
-using System;
+using CriServer.Dtos;
 using System.Collections.Generic;
 using System.Net;
-using CriServer.Dtos;
 
 namespace CriServer
 {
+    // Represents the response returned from the registry
     public class RegistryResponse
     {
         private string Value { get; }
@@ -23,7 +23,7 @@ namespace CriServer
 
         public static RegistryResponse LOGIN_SUCCESSFUL => new(ProtocolCode.Login + "\nOK");
         public static RegistryResponse LOGIN_FAIL => new(ProtocolCode.Login + "\nFAIL");
-        
+
         public static RegistryResponse LOGOUT_SUCCESSFUL => new(ProtocolCode.Logout + "\nOK");
 
         public static RegistryResponse SEARCH_USER_ONLINE(IPAddress ipAddress) =>
@@ -44,8 +44,8 @@ namespace CriServer
         {
             return Value;
         }
-        
-        public override bool Equals(Object obj)
+
+        public override bool Equals(object obj)
         {
             if (obj is string)
                 return Value == obj.ToString();

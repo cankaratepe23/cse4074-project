@@ -1,12 +1,13 @@
-﻿using System;
+﻿using CriServer.IServices;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using CriServer.IServices;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace CriServer.Services
 {
+    // Database access layer for users
     class UserService : IUserService
     {
         private const int USERNAME_MAX_CHARACTER_LIMIT = 16;
@@ -40,7 +41,7 @@ namespace CriServer.Services
 
         public RegistryResponse LoginUser(string username, string password, IPAddress ipAddress)
         {
-            var user = GetUserByUsername(username);
+            User user = GetUserByUsername(username);
 
             if (user == null)
                 return RegistryResponse.LOGIN_FAIL;
@@ -56,7 +57,7 @@ namespace CriServer.Services
 
         public RegistryResponse LogoutUser(IPAddress ipAddress)
         {
-            var user = GetUserByIPAddress(ipAddress);
+            User user = GetUserByIPAddress(ipAddress);
 
             if (user != null)
             {

@@ -1,13 +1,14 @@
-﻿using CriServer.IServices;
+﻿using CriServer.Dtos;
+using CriServer.IServices;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CriServer.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace CriServer.Services
 {
+    // Database access layer for groups
     class GroupService : IGroupService
     {
         private const int MAX_USER_COUNT = 100;
