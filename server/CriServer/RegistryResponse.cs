@@ -37,7 +37,7 @@ namespace CriServer
             new(ProtocolCode.GroupCreate + "\nNOT_FOUND\n" + string.Join("\n", usernames));
         public static RegistryResponse GROUP_CREATE_FAIL => new(ProtocolCode.GroupCreate + "\nFAIL");
 
-        public static RegistryResponse GROUP_SEARCH_SUCCESSFUL(List<UserIpDto> userIpDtos) => new(ProtocolCode.GroupSearch + "\nNOT_FOUND"+ string.Join("\n", userIpDtos));
+        public static RegistryResponse GROUP_SEARCH_SUCCESSFUL(List<UserIpDto> userIpDtos) => new(ProtocolCode.GroupSearch + "\nOK\n"+ string.Join("\n", userIpDtos));
         public static RegistryResponse GROUP_SEARCH_NOT_FOUND => new(ProtocolCode.GroupSearch + "\nNOT_FOUND");
 
         public override string ToString()

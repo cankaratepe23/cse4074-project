@@ -27,6 +27,7 @@ namespace CriServer.Services
                 return RegistryResponse.GROUP_CREATE_FAIL;
 
             Group newGroup = new Group();
+            newGroup.Users = new List<User>();
             List<string> usersNotFound = new List<string>();
             foreach (string username in usernames)
             {
